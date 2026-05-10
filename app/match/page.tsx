@@ -50,7 +50,7 @@ export default function MatchPredictorPage() {
 
   const team1 = teams.find((t) => t.id === selectedMatch.team1Id);
   const team2 = teams.find((t) => t.id === selectedMatch.team2Id);
-  const pred = selectedMatch ? predMap.get(selectedMatch.id) : 0.5;
+  const pred = predMap.get(selectedMatch.id) ?? 0.5;
   const t1Prob = selectedMatch.team1Id === team1?.id ? pred : 1 - pred;
   const t2Prob = 1 - t1Prob;
 

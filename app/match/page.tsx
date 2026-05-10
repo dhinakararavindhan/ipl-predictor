@@ -15,10 +15,11 @@ import Link from 'next/link';
 
 export default function MatchPredictorPage() {
   const { teams, fixtures, simulationResults } = useIPLStore();
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [showAllMatches, setShowAllMatches] = useState(false);
 
   // Find the first remaining match
-  const selectedMatch = fixtures.find((f) => !f.isCompleted);
+  const selectedMatch = fixtures.find((f) => f.id === selectedMatchId) ?? fixtures.find((f) => !f.isCompleted);
   const predictions = getMatchPredictions(teams, fixtures);
   const predMap = new Map(predictions.map((p) => [p.fixtureId, p.team1WinProbability]));
 
@@ -54,10 +55,6 @@ export default function MatchPredictorPage() {
   const t1Prob = selectedMatch.team1Id === team1?.id ? pred : 1 - pred;
   const t2Prob = 1 - t1Prob;
 
-  // Get playoff odds
-  const team1Odds = sortedResults.find((r) => r.teamId === team1.id)?.top4Probability ?? 0;
-  const team2Odds = sortedResults.find((r) => r.teamId === team2.id)?.top4Probability ?? 0;
-
   if (!team1 || !team2) {
     return (
       <div className="text-center py-12">
@@ -66,6 +63,10 @@ export default function MatchPredictorPage() {
       </div>
     );
   }
+
+  // Get playoff odds (after null check)
+  const team1Odds = sortedResults.find((r) => r.teamId === team1.id)?.top4Probability ?? 0;
+  const team2Odds = sortedResults.find((r) => r.teamId === team2.id)?.top4Probability ?? 0;
 
   return (
     <div className="space-y-6">
@@ -225,7 +226,7 @@ export default function MatchPredictorPage() {
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
               <div className="text-[10px] text-muted mb-1">Match Importance</div>
               <div className={`font-bold ${selectedMatch.importance === 'critical' ? 'text-red-500' : selectedMatch.importance === 'high' ? 'text-amber-500' : 'text-blue-500'}`}>
-                {selectedMatch.importance.toUpperCase()}
+                {selectedMatch.importance?.toUpperCase() ?? 'MEDIUM'}
               </div>
             </div>
           </div>

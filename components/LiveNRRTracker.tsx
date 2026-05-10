@@ -63,7 +63,7 @@ export function LiveNRRTracker({ team1, team2, team1Score, team2Score }: LiveNRR
     team2NRR = calculateLiveNRR(team2, score2.runs, score2.overs, score1.runs, score1.overs);
   }
   
-  const hasLiveData = team1NRR && team2NRR;
+  const hasLiveData = team1NRR !== null && team2NRR !== null;
   
   return (
     <div className="space-y-3">
@@ -99,15 +99,15 @@ export function LiveNRRTracker({ team1, team2, team1Score, team2Score }: LiveNRR
               </div>
               <div>
                 <div className="text-faint">Match Impact</div>
-                <div className={`font-bold flex items-center gap-1 ${team1NRR.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                  {team1NRR.change > 0.01 ? <TrendingUp className="w-3 h-3" /> : team1NRR.change < -0.01 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                  {team1NRR.change >= 0 ? '+' : ''}{team1NRR.change.toFixed(3)}
+                <div className={`font-bold flex items-center gap-1 ${team1NRR!.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                  {team1NRR!.change > 0.01 ? <TrendingUp className="w-3 h-3" /> : team1NRR!.change < -0.01 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                  {team1NRR!.change >= 0 ? '+' : ''}{team1NRR!.change.toFixed(3)}
                 </div>
               </div>
               <div>
                 <div className="text-faint">Projected NRR</div>
-                <div className={`font-bold ${team1NRR.estimatedNewNRR >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                  {formatNRR(team1NRR.estimatedNewNRR)}
+                <div className={`font-bold ${team1NRR!.estimatedNewNRR >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                  {formatNRR(team1NRR!.estimatedNewNRR)}
                 </div>
               </div>
             </div>
@@ -134,15 +134,15 @@ export function LiveNRRTracker({ team1, team2, team1Score, team2Score }: LiveNRR
               </div>
               <div>
                 <div className="text-faint">Match Impact</div>
-                <div className={`font-bold flex items-center gap-1 ${team2NRR.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                  {team2NRR.change > 0.01 ? <TrendingUp className="w-3 h-3" /> : team2NRR.change < -0.01 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                  {team2NRR.change >= 0 ? '+' : ''}{team2NRR.change.toFixed(3)}
+                <div className={`font-bold flex items-center gap-1 ${team2NRR!.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                  {team2NRR!.change > 0.01 ? <TrendingUp className="w-3 h-3" /> : team2NRR!.change < -0.01 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                  {team2NRR!.change >= 0 ? '+' : ''}{team2NRR!.change.toFixed(3)}
                 </div>
               </div>
               <div>
                 <div className="text-faint">Projected NRR</div>
-                <div className={`font-bold ${team2NRR.estimatedNewNRR >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-                  {formatNRR(team2NRR.estimatedNewNRR)}
+                <div className={`font-bold ${team2NRR!.estimatedNewNRR >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                  {formatNRR(team2NRR!.estimatedNewNRR)}
                 </div>
               </div>
             </div>
@@ -152,12 +152,12 @@ export function LiveNRRTracker({ team1, team2, team1Score, team2Score }: LiveNRR
           <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
             <div className="text-[10px] text-muted uppercase tracking-wide mb-1">NRR Gap</div>
             <div className="font-bold text-primary">
-              {Math.abs(team1NRR.estimatedNewNRR - team2NRR.estimatedNewNRR).toFixed(3)}
+              {Math.abs(team1NRR!.estimatedNewNRR - team2NRR!.estimatedNewNRR).toFixed(3)}
             </div>
             <div className="text-xs text-muted mt-1">
-              {team1NRR.estimatedNewNRR > team2NRR.estimatedNewNRR 
+              {team1NRR!.estimatedNewNRR > team2NRR!.estimatedNewNRR 
                 ? `${team1.shortName} ahead` 
-                : team2NRR.estimatedNewNRR > team1NRR.estimatedNewNRR
+                : team2NRR!.estimatedNewNRR > team1NRR!.estimatedNewNRR
                 ? `${team2.shortName} ahead`
                 : 'Equal'}
             </div>

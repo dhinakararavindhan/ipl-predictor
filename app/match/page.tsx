@@ -54,6 +54,10 @@ export default function MatchPredictorPage() {
   const t1Prob = selectedMatch.team1Id === team1?.id ? pred : 1 - pred;
   const t2Prob = 1 - t1Prob;
 
+  // Get playoff odds
+  const team1Odds = sortedResults.find((r) => r.teamId === team1.id)?.top4Probability ?? 0;
+  const team2Odds = sortedResults.find((r) => r.teamId === team2.id)?.top4Probability ?? 0;
+
   if (!team1 || !team2) {
     return (
       <div className="text-center py-12">
@@ -209,13 +213,13 @@ export default function MatchPredictorPage() {
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
               <div className="text-[10px] text-muted mb-1">Team 1 Playoff Odds</div>
               <div className="font-bold text-primary">
-                {sortedResults.find((r) => r.teamId === team1.id)?.top4Probability * 100 ?? 0}%
+                {team1Odds * 100}%
               </div>
             </div>
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
               <div className="text-[10px] text-muted mb-1">Team 2 Playoff Odds</div>
               <div className="font-bold text-primary">
-                {sortedResults.find((r) => r.teamId === team2.id)?.top4Probability * 100 ?? 0}%
+                {team2Odds * 100}%
               </div>
             </div>
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>

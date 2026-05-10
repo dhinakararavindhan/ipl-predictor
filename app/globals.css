@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+/* ── Tell Tailwind v4 to use .dark class for dark: variants ──────────────── */
+@variant dark (&:where(.dark, .dark *));
+
+/* ── Light mode (default) ─────────────────────────────────────────────────── */
+:root {
+  --bg:           #f8fafc;
+  --bg-card:      #ffffff;
+  --bg-nav:       rgba(255, 255, 255, 0.9);
+  --border:       #e2e8f0;
+  --border-card:  #e2e8f0;
+  --text:         #0f172a;
+  --text-muted:   #64748b;
+  --text-faint:   #94a3b8;
+  --row-top2:     #f0fdf4;
+  --row-top4:     #eff6ff;
+  --row-hover:    #f8fafc;
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+}
+
+/* ── Dark mode ────────────────────────────────────────────────────────────── */
+.dark {
+  --bg:           #0a0a0f;
+  --bg-card:      rgba(255, 255, 255, 0.05);
+  --bg-nav:       rgba(0, 0, 0, 0.6);
+  --border:       rgba(255, 255, 255, 0.08);
+  --border-card:  rgba(255, 255, 255, 0.1);
+  --text:         #f8fafc;
+  --text-muted:   #94a3b8;
+  --text-faint:   #475569;
+  --row-top2:     rgba(16, 185, 129, 0.05);
+  --row-top4:     rgba(59, 130, 246, 0.05);
+  --row-hover:    rgba(255, 255, 255, 0.04);
+  --scrollbar-track: rgba(255, 255, 255, 0.03);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+
+/* ── Utility classes ──────────────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 1rem;
+}
+
+.dark .card {
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
+.light .card,
+:root:not(.dark) .card {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+}
+
+.text-primary   { color: var(--text); }
+.text-muted     { color: var(--text-muted); }
+.text-faint     { color: var(--text-faint); }
+.bg-page        { background: var(--bg); }
+.border-theme   { border-color: var(--border); }
+
+/* ── Gradient text ────────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Animated background (dark only) ─────────────────────────────────────── */
+.dark .bg-animated {
+  background:
+    radial-gradient(ellipse at top left, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    #0a0a0f;
+}

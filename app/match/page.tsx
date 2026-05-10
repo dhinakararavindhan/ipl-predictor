@@ -209,13 +209,13 @@ export default function MatchPredictorPage() {
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
               <div className="text-[10px] text-muted mb-1">Team 1 Playoff Odds</div>
               <div className="font-bold text-primary">
-                {sortedResults.find((r) => r.teamId === team1.id)?.top4Probability * 100 || 0}%
+                {sortedResults.find((r) => r.teamId === team1.id)?.top4Probability * 100 ?? 0}%
               </div>
             </div>
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
               <div className="text-[10px] text-muted mb-1">Team 2 Playoff Odds</div>
               <div className="font-bold text-primary">
-                {sortedResults.find((r) => r.teamId === team2.id)?.top4Probability * 100 || 0}%
+                {sortedResults.find((r) => r.teamId === team2.id)?.top4Probability * 100 ?? 0}%
               </div>
             </div>
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>

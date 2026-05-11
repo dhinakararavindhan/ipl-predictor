@@ -64,6 +64,13 @@ export default function RootLayout({
                     <span className="hidden sm:inline">Match Predictor</span>
                   </Link>
                   <Link
+                    href="/cap-predictor"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
+                  >
+                    <Trophy className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Cap Predictor</span>
+                  </Link>
+                  <Link
                     href="/"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
                   >

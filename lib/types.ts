@@ -22,6 +22,19 @@ export interface Team {
   homeGround: string;
 }
 
+export interface Player {
+  id: string;
+  name: string;
+  teamId: string;
+  role: 'batsman' | 'bowler' | 'all-rounder';
+  matches: number;
+  runs?: number;
+  wickets?: number;
+  average?: number;
+  strikeRate?: number;
+  economy?: number;
+}
+
 export interface Fixture {
   id: string;
   team1Id: string;

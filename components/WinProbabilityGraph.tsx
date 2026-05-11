@@ -98,6 +98,12 @@ function calculateWinProbability(
   return 0.5;
 }
 
+interface WinProbPoint {
+  over: number;
+  team1Prob: number;
+  team2Prob: number;
+}
+
 /**
  * Generates a simulated ball-by-ball win probability curve
  * based on the final scores. This is an approximation — real
@@ -109,7 +115,7 @@ function generateWinProbCurve(score1: string, score2: string): WinProbPoint[] {
   const s1 = parseScore(score1);
   const s2 = parseScore(score2);
 
-  if (!s1) return [{ over: 0, team1Prob: 50 }];
+  if (!s1) return [{ over: 0, team1Prob: 50, team2Prob: 50 }];
 
   // First innings: batting team's probability starts at 50% and fluctuates
   const totalOvers = Math.ceil(s1.overs);
@@ -120,7 +126,8 @@ function generateWinProbCurve(score1: string, score2: string): WinProbPoint[] {
     const actualScore = s1.runs * progress;
     const advantage = (actualScore - parScore) / 50; // normalized
     const prob = 50 + advantage * 15 + (Math.random() - 0.5) * 5;
-    points.push({ over: i, team1Prob: Math.max(10, Math.min(90, prob)) });
+    const team1Prob = Math.max(10, Math.min(90, prob));
+    points.push({ over: i, team1Prob, team2Prob: 100 - team1Prob });
   }
 
   // Second innings (if available)
@@ -134,13 +141,15 @@ function generateWinProbCurve(score1: string, score2: string): WinProbPoint[] {
       const advantage = (currentRate - requiredRate) / 3;
       // In second innings, team2 chasing means higher team2Prob = lower team1Prob
       const team2Advantage = advantage * 20;
-      const prob = points[points.length - 1].team1Prob - team2Advantage + (Math.random() - 0.5) * 8;
-      points.push({ over: totalOvers + i, team1Prob: Math.max(5, Math.min(95, prob)) });
+      const team1Prob = points[points.length - 1].team1Prob - team2Advantage + (Math.random() - 0.5) * 8;
+      const finalTeam1Prob = Math.max(5, Math.min(95, team1Prob));
+      points.push({ over: totalOvers + i, team1Prob: finalTeam1Prob, team2Prob: 100 - finalTeam1Prob });
     }
 
     // Final result
     const team1Won = s1.runs > s2.runs;
-    points.push({ over: totalOvers + totalOvers2, team1Prob: team1Won ? 100 : 0 });
+    const finalTeam1Prob = team1Won ? 100 : 0;
+    points.push({ over: totalOvers + totalOvers2, team1Prob: finalTeam1Prob, team2Prob: 100 - finalTeam1Prob });
   }
 
   return points;
@@ -292,7 +301,7 @@ export function WinProbabilityGraph({ team1Name, team2Name, team1Color, team2Col
         </div>
       </div>
 
-      {/* Win Probability Graph */}
+      {/* Win Probability Graph - Two Lines */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted">
           <span style={{ color: team1Color }}>{team1Name}</span>
@@ -304,6 +313,10 @@ export function WinProbabilityGraph({ team1Name, team2Name, team1Color, team2Col
               <linearGradient id="colorTeam1" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={team1Color} stopOpacity={0.3}/>
                 <stop offset="95%" stopColor={team1Color} stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="colorTeam2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={team2Color} stopOpacity={0.3}/>
+                <stop offset="95%" stopColor={team2Color} stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -322,12 +335,22 @@ export function WinProbabilityGraph({ team1Name, team2Name, team1Color, team2Col
             />
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine y={50} stroke="var(--border)" strokeDasharray="4 4" />
+            {/* Team 1 Line */}
             <Area
               type="monotone"
               dataKey="team1Prob"
               stroke={team1Color}
               strokeWidth={2}
               fill="url(#colorTeam1)"
+              activeDot={{ r: 3 }}
+            />
+            {/* Team 2 Line (100 - team1Prob) */}
+            <Area
+              type="monotone"
+              dataKey="team2Prob"
+              stroke={team2Color}
+              strokeWidth={2}
+              fill="url(#colorTeam2)"
               activeDot={{ r: 3 }}
             />
           </AreaChart>

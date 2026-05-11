@@ -69,22 +69,22 @@ export default function MatchPredictorPage() {
   const team2Odds = sortedResults.find((r) => r.teamId === team2.id)?.top4Probability ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Link href="/" className="flex items-center gap-1 text-sm text-muted hover:text-primary">
-            <ChevronLeft className="w-4 h-4" />
+          <Link href="/" className="flex items-center gap-1 text-xs sm:text-sm text-muted hover:text-primary">
+            <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
             Back to Home
           </Link>
-          <span className="text-muted">|</span>
-          <span className="text-xs px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">
+          <span className="text-muted hidden sm:inline">|</span>
+          <span className="text-[10px] sm:text-xs px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium">
             {selectedMatch.importance === 'critical' ? 'Critical' : selectedMatch.importance === 'high' ? 'High' : 'Medium'} Match
           </span>
         </div>
         <button
           onClick={() => setShowAllMatches(!showAllMatches)}
-          className="text-xs px-3 py-1.5 rounded-lg border transition-colors"
+          className="text-[10px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-lg border transition-colors"
           style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--bg-card)' }}
         >
           {showAllMatches ? 'Show Next 6' : 'Show All Remaining'}
@@ -92,50 +92,50 @@ export default function MatchPredictorPage() {
       </div>
 
       {/* Match Header */}
-      <div className="rounded-xl p-4 text-center space-y-3" style={{ background: 'var(--row-top2)', border: '1px solid var(--border)' }}>
-        <div className="flex items-center justify-center gap-2 text-muted text-xs">
+      <div className="rounded-xl p-3 sm:p-4 text-center space-y-2 sm:space-y-3" style={{ background: 'var(--row-top2)', border: '1px solid var(--border)' }}>
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-muted flex-wrap">
           <Calendar className="w-3 h-3" />
           <span>{selectedMatch.date}</span>
-          <span className="w-0.5 h-0.5 rounded-full bg-muted" />
+          <span className="w-0.5 h-0.5 rounded-full bg-muted hidden sm:block" />
           <MapPin className="w-3 h-3" />
-          <span className="truncate max-w-[150px]">{selectedMatch.venue.split(',')[0]}</span>
+          <span className="truncate max-w-[100px] sm:max-w-[150px]">{selectedMatch.venue.split(',')[0]}</span>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <div className="flex flex-col items-center gap-1">
-            <TeamLogo team={team1} size="md" />
-            <span className="font-bold text-primary text-sm">{team1.shortName}</span>
-            <span className="text-[10px] text-muted">{team1.points} pts</span>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3">
+          <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+            <TeamLogo team={team1} size="sm" />
+            <span className="font-bold text-primary text-xs sm:text-sm">{team1.shortName}</span>
+            <span className="text-[9px] sm:text-[10px] text-muted">{team1.points} pts</span>
           </div>
           <div className="flex flex-col items-center gap-0.5">
-            <span className="text-xl font-black text-muted">VS</span>
+            <span className="text-lg sm:text-xl font-black text-muted">VS</span>
           </div>
-          <div className="flex flex-col items-center gap-1">
-            <TeamLogo team={team2} size="md" />
-            <span className="font-bold text-primary text-sm">{team2.shortName}</span>
-            <span className="text-[10px] text-muted">{team2.points} pts</span>
+          <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+            <TeamLogo team={team2} size="sm" />
+            <span className="font-bold text-primary text-xs sm:text-sm">{team2.shortName}</span>
+            <span className="text-[9px] sm:text-[10px] text-muted">{team2.points} pts</span>
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
           <div className="text-center">
-            <div className="text-[10px] text-muted">Win Prob</div>
-            <div className="text-lg font-bold text-primary">{(t1Prob * 100).toFixed(0)}%</div>
+            <div className="text-[9px] sm:text-[10px] text-muted">Win Prob</div>
+            <div className="text-base sm:text-lg font-bold text-primary">{(t1Prob * 100).toFixed(0)}%</div>
           </div>
           <div className="text-center">
-            <div className="text-[10px] text-muted">Win Prob</div>
-            <div className="text-lg font-bold text-primary">{(t2Prob * 100).toFixed(0)}%</div>
+            <div className="text-[9px] sm:text-[10px] text-muted">Win Prob</div>
+            <div className="text-base sm:text-lg font-bold text-primary">{(t2Prob * 100).toFixed(0)}%</div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Win Probability */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Trophy className="w-4 h-4 text-indigo-500" />
+            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
+              <Trophy className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-500" />
               Win Probability
             </CardTitle>
           </CardHeader>
@@ -168,8 +168,8 @@ export default function MatchPredictorPage() {
         {/* NRR Calculator */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <Calculator className="w-4 h-4 text-emerald-500" />
+            <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
+              <Calculator className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
               NRR Predictor
             </CardTitle>
           </CardHeader>
@@ -191,8 +191,8 @@ export default function MatchPredictorPage() {
       {/* Live Standings */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Trophy className="w-4 h-4 text-emerald-500" />
+          <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
+            <Trophy className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-500" />
             Live Standings
           </CardTitle>
         </CardHeader>
@@ -204,27 +204,27 @@ export default function MatchPredictorPage() {
       {/* Match Context */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <TrendingUp className="w-4 h-4 text-amber-500" />
+          <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
+            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-amber-500" />
             Match Context
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs">
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
-              <div className="text-[10px] text-muted mb-1">Team 1 Playoff Odds</div>
+              <div className="text-[9px] sm:text-[10px] text-muted mb-1">Team 1 Playoff Odds</div>
               <div className="font-bold text-primary">
                 {team1Odds * 100}%
               </div>
             </div>
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
-              <div className="text-[10px] text-muted mb-1">Team 2 Playoff Odds</div>
+              <div className="text-[9px] sm:text-[10px] text-muted mb-1">Team 2 Playoff Odds</div>
               <div className="font-bold text-primary">
                 {team2Odds * 100}%
               </div>
             </div>
             <div className="rounded-lg p-2" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
-              <div className="text-[10px] text-muted mb-1">Match Importance</div>
+              <div className="text-[9px] sm:text-[10px] text-muted mb-1">Match Importance</div>
               <div className={`font-bold ${selectedMatch.importance === 'critical' ? 'text-red-500' : selectedMatch.importance === 'high' ? 'text-amber-500' : 'text-blue-500'}`}>
                 {selectedMatch.importance?.toUpperCase() ?? 'MEDIUM'}
               </div>
@@ -236,8 +236,8 @@ export default function MatchPredictorPage() {
       {/* All Remaining Matches */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-muted" />
+          <CardTitle className="flex items-center gap-2 text-xs sm:text-sm">
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-muted" />
             Remaining Fixtures
           </CardTitle>
         </CardHeader>
@@ -258,22 +258,22 @@ export default function MatchPredictorPage() {
                   className="flex items-center justify-between p-2 rounded-lg cursor-pointer transition-colors hover:opacity-80"
                   style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <div className="flex items-center gap-1">
                       <TeamLogo team={t1} size="xs" />
                       <span className="font-semibold text-primary text-xs">{t1.shortName}</span>
                     </div>
-                    <span className="text-[10px] text-muted">vs</span>
-                    <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] sm:text-[10px] text-muted hidden sm:inline">vs</span>
+                    <div className="flex items-center gap-1">
                       <TeamLogo team={t2} size="xs" />
                       <span className="font-semibold text-primary text-xs">{t2.shortName}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <div className="text-right hidden sm:block">
-                      <div className="text-[10px] text-muted">{fixture.date}</div>
+                      <div className="text-[9px] sm:text-[10px] text-muted">{fixture.date}</div>
                     </div>
-                    <div className="w-12 text-center">
+                    <div className="w-10 sm:w-12 text-center">
                       <div className="text-xs font-semibold text-primary">{(t1WinProb * 100).toFixed(0)}%</div>
                     </div>
                   </div>

@@ -29,10 +29,10 @@ export default function HomePage() {
   const teamMap = new Map(teams.map((t) => [t.id, t]));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Hero */}
-      <div className="text-center py-6">
-        <h1 className="text-3xl sm:text-4xl font-bold text-primary mb-2">
+      <div className="text-center py-4 sm:py-6">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-2">
           IPL 2026{' '}
           <span className="gradient-text">Playoff Race</span>
         </h1>
@@ -54,53 +54,49 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* Main Grid - Mobile optimized */}
+      <div className="grid grid-cols-1 gap-6">
         {/* Points Table */}
-        <div className="xl:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                🏆 Points Table
-                {isSimulating && (
-                  <span className="text-xs text-muted font-normal flex items-center gap-1">
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                    Simulating...
-                  </span>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {teams.length === 0 ? (
-                <TableSkeleton />
-              ) : (
-                <PointsTable simulationResults={simulationResults} />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+              🏆 Points Table
+              {isSimulating && (
+                <span className="text-xs text-muted font-normal flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  Simulating...
+                </span>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {teams.length === 0 ? (
+              <TableSkeleton />
+            ) : (
+              <PointsTable simulationResults={simulationResults} />
+            )}
+          </CardContent>
+        </Card>
 
         {/* Playoff Simulator */}
-        <div>
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>🎯 Playoff Simulator</span>
-                <Link href="/match" className="text-xs text-indigo-500 hover:text-indigo-600 flex items-center gap-1">
-                  Match Predictor <Trophy className="w-3 h-3" />
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PlayoffSimulator teamId={sortedResults[0]?.teamId ?? 'rcb'} />
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-sm sm:text-base">
+              <span>🎯 Playoff Simulator</span>
+              <Link href="/match" className="text-xs text-indigo-500 hover:text-indigo-600 flex items-center gap-1">
+                Match Predictor <Trophy className="w-3 h-3" />
+              </Link>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PlayoffSimulator teamId={sortedResults[0]?.teamId ?? 'rcb'} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Probability Cards */}
       <div>
-        <h2 className="text-lg font-semibold text-primary mb-4">Qualification Probabilities</h2>
+        <h2 className="text-base font-semibold text-primary mb-3">Qualification Probabilities</h2>
         {simulationResults.length === 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {Array.from({ length: 10 }).map((_, i) => (
@@ -122,7 +118,7 @@ export default function HomePage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>📊 Net Run Rate Comparison</CardTitle>
+            <CardTitle className="text-sm sm:text-base">📊 Net Run Rate Comparison</CardTitle>
           </CardHeader>
           <CardContent>
             {teams.length === 0 ? <ChartSkeleton /> : <NRRChart teams={teams} />}
@@ -132,7 +128,7 @@ export default function HomePage() {
         {/* Upcoming Fixtures */}
         <Card>
           <CardHeader>
-            <CardTitle>📅 Upcoming Fixtures</CardTitle>
+            <CardTitle className="text-sm sm:text-base">📅 Upcoming Fixtures</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

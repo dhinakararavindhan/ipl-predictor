@@ -54,9 +54,9 @@ export function OrangeCapPredictor({ playerStats }: { playerStats: PlayerStatsRe
 
   return (
     <div className="space-y-6">
-      <div className="text-center py-6">
-        <h2 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center justify-center gap-3">
-          <Trophy className="w-8 h-8 text-amber-500" />
+      <div className="text-center py-4 px-4">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center justify-center gap-3">
+          <Trophy className="w-6 h-6 text-amber-500" />
           <span className="bg-gradient-to-r from-amber-500 to-orange-500 bg-clip-text text-transparent">
             Orange Cap Predictor
           </span>
@@ -71,28 +71,32 @@ export function OrangeCapPredictor({ playerStats }: { playerStats: PlayerStatsRe
         {sortedPlayers.slice(0, 10).map((player, idx) => (
           <div
             key={idx}
-            className="flex items-center gap-4 p-4 rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/30 shadow-lg hover:bg-white/80 dark:hover:bg-slate-700/60 transition-all"
+            className="group flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl bg-gradient-to-r from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 backdrop-blur-md border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-300"
           >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+            <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm ${
               idx < 3 
                 ? idx === 0 
-                  ? 'bg-amber-400 text-white' 
+                  ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30' 
                   : idx === 1 
-                  ? 'bg-slate-300 text-white' 
-                  : 'bg-amber-700 text-white'
-                : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                  ? 'bg-gradient-to-br from-slate-300 to-slate-400 text-white shadow-lg shadow-slate-500/30' 
+                  : 'bg-gradient-to-br from-amber-700 to-amber-900 text-white shadow-lg shadow-amber-700/30'
+                : 'bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700 text-gray-600 dark:text-gray-300'
             }`}>
               #{idx + 1}
             </div>
-            <TeamLogo team={{ id: player.team, name: '', shortName: '', color: '', secondaryColor: '', emoji: '' } as any} size="sm" />
-            <div className="flex-1">
-              <div className="font-semibold text-slate-800 dark:text-white">{player.name}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {player.team.toUpperCase()} • {player.matches} matches
+            <div className="flex-shrink-0">
+              <TeamLogo team={{ id: player.team, name: '', shortName: '', color: '', secondaryColor: '', emoji: '' } as any} size="sm" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-slate-800 dark:text-white truncate text-sm sm:text-base">{player.name}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 sm:gap-2 flex-wrap">
+                <span className="px-1.5 sm:px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-xs sm:text-sm">{player.team.toUpperCase()}</span>
+                <span className="hidden sm:inline">• {player.matches} matches</span>
+                {player.average && <span className="hidden sm:inline">• Avg: {player.average.toFixed(2)}</span>}
               </div>
             </div>
-            <div className="text-right">
-              <div className="font-bold text-slate-800 dark:text-white">{Math.round(player.predictedRuns || 0)} runs</div>
+            <div className="text-right flex-shrink-0">
+              <div className="font-bold text-base sm:text-lg text-slate-800 dark:text-white">{Math.round(player.predictedRuns || 0)} runs</div>
               <div className="text-xs text-slate-500 dark:text-slate-400">
                 {player.runs ? `${player.runs} actual` : 'Projected'}
               </div>

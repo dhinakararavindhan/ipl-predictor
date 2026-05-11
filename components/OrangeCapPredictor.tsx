@@ -14,6 +14,10 @@ interface PlayerStat {
   average?: number;
   strikeRate?: number;
   economy?: number;
+  runs_scored?: number;
+  wickets_taken?: number;
+  avg?: number;
+  eco?: number;
 }
 
 interface PlayerStatsResponse {
@@ -29,7 +33,17 @@ export function OrangeCapPredictor({ playerStats }: { playerStats: PlayerStatsRe
   let batsmen: PlayerStat[] = [];
   
   if (playerStats?.live && playerStats.data.batting && playerStats.data.batting.length > 0) {
-    batsmen = playerStats.data.batting;
+    // Map CricAPI data to our format
+    batsmen = playerStats.data.batting.map(p => ({
+      name: p.name,
+      team: p.team,
+      matches: p.matches || 0,
+      runs: p.runs || p.runs_scored || 0,
+      wickets: p.wickets || p.wickets_taken || 0,
+      average: p.average || p.avg || 0,
+      strikeRate: p.strikeRate || 0,
+      economy: p.economy || 0
+    }));
   } else {
     // Fallback to static data
     batsmen = PLAYERS.filter((p) => p.role === 'batsman' || p.role === 'all-rounder').map(p => ({

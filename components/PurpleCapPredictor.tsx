@@ -14,6 +14,10 @@ interface PlayerStat {
   average?: number;
   strikeRate?: number;
   economy?: number;
+  runs_scored?: number;
+  wickets_taken?: number;
+  avg?: number;
+  eco?: number;
 }
 
 interface PlayerStatsResponse {
@@ -29,7 +33,17 @@ export function PurpleCapPredictor({ playerStats }: { playerStats: PlayerStatsRe
   let bowlers: PlayerStat[] = [];
   
   if (playerStats?.live && playerStats.data.bowling && playerStats.data.bowling.length > 0) {
-    bowlers = playerStats.data.bowling;
+    // Map CricAPI data to our format
+    bowlers = playerStats.data.bowling.map(p => ({
+      name: p.name,
+      team: p.team,
+      matches: p.matches || 0,
+      runs: p.runs || p.runs_scored || 0,
+      wickets: p.wickets || p.wickets_taken || 0,
+      average: p.average || p.avg || 0,
+      strikeRate: p.strikeRate || 0,
+      economy: p.economy || p.eco || 0
+    }));
   } else {
     // Fallback to static data
     bowlers = PLAYERS.filter((p) => p.role === 'bowler' || p.role === 'all-rounder').map(p => ({

@@ -6,7 +6,7 @@ import { PurpleCapPredictor } from '@/components/PurpleCapPredictor';
 import { Trophy, Activity, Target, Loader2, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface PlayerStat {
+interface CricAPIPlayer {
   name: string;
   team: string;
   matches: number;
@@ -15,12 +15,16 @@ interface PlayerStat {
   average?: number;
   strikeRate?: number;
   economy?: number;
+  runs_scored?: number;
+  wickets_taken?: number;
+  avg?: number;
+  eco?: number;
 }
 
 interface PlayerStatsResponse {
   data: {
-    batting: PlayerStat[];
-    bowling: PlayerStat[];
+    batting: CricAPIPlayer[];
+    bowling: CricAPIPlayer[];
   };
   live: boolean;
 }

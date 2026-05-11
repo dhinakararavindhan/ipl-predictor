@@ -22,28 +22,34 @@ export async function GET() {
     }
 
     // Fetch player statistics from CricAPI
-    const res = await fetch(
-      `https://api.cricapi.com/v1/series_batting_stats?apikey=${apiKey}&id=${seriesId}&offset=0`,
-      { next: { revalidate: 300 } }
-    );
+    const [battingRes, bowlingRes] = await Promise.all([
+      fetch(
+        `https://api.cricapi.com/v1/series_batting_stats?apikey=${apiKey}&id=${seriesId}&offset=0`,
+        { next: { revalidate: 300 } }
+      ),
+      fetch(
+        `https://api.cricapi.com/v1/series_bowling_stats?apikey=${apiKey}&id=${seriesId}&offset=0`,
+        { next: { revalidate: 300 } }
+      ),
+    ]);
 
-    if (!res.ok) {
+    const battingData = await battingRes.json();
+    const bowlingData = await bowlingRes.json();
+
+    if (battingData.status !== 'success' || bowlingData.status !== 'success') {
       return NextResponse.json(
         { error: 'CricAPI request failed. Using static data.', live: false },
         { status: 200 }
       );
     }
 
-    const data = await res.json();
-
-    if (data.status !== 'success') {
-      return NextResponse.json(
-        { error: 'CricAPI returned error. Using static data.', live: false },
-        { status: 200 }
-      );
-    }
-
-    const result = { data, live: true };
+    const result = { 
+      data: {
+        batting: battingData.data,
+        bowling: bowlingData.data
+      },
+      live: true 
+    };
     cache = { data: result, timestamp: Date.now() };
 
     return NextResponse.json(result);

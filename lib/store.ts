@@ -4,6 +4,31 @@ import { TEAMS } from './data/teams';
 import { FIXTURES } from './data/fixtures';
 import { runSimulation } from './simulation';
 
+interface LiveMatchData {
+  live: boolean;
+  source?: string;
+  data?: {
+    status_code: number;
+    season: string;
+    source: string;
+    status: string;
+    live_count: number;
+    matches: Record<string, {
+      status: string;
+      title: string;
+      team_1: string;
+      score_1: string;
+      team_2: string;
+      score_2: string;
+      status_text: string;
+    }>;
+  };
+  matches?: Record<string, unknown>[];
+  noLiveMatch?: boolean;
+  error?: string;
+  cached?: boolean;
+}
+
 interface IPLStore {
   teams: Team[];
   fixtures: Fixture[];
@@ -12,6 +37,7 @@ interface IPLStore {
   isSimulating: boolean;
   lastSimulated: string | null;
   simulationCount: number;
+  lastLiveUpdate: string | null;
 
   // Actions
   setFixtureWinner: (fixtureId: string, winnerId: string) => void;
@@ -21,6 +47,7 @@ interface IPLStore {
   addInsight: (insight: AIInsight) => void;
   clearInsights: () => void;
   updateLiveScore: (fixtureId: string, score1: string, score2: string, overs1: number, overs2: number, wickets1: number, wickets2: number) => void;
+  fetchLiveMatchData: () => Promise<void>;
 }
 
 // IDs of fixtures that were already completed in the real data (never changes)

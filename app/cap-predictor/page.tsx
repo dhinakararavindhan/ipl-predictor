@@ -139,16 +139,18 @@ export default function CapPredictorPage() {
           </span>
           {lastUpdated && (
             <span className="text-xs">
-              Updated: {lastUpdated.toLocaleTimeString()}
+              Updated: {lastUpdated.toLocaleString()}
             </span>
           )}
           <button 
             onClick={handleRefresh}
             disabled={loading}
-            className="p-1.5 sm:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 flex-shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--bg-card)' }}
             title="Refresh data"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
       </div>

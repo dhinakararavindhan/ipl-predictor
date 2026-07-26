@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, Volume2 } from 'lucide-react';
+import { Flag, ShieldCheck, Trash2, Volume2 } from 'lucide-react';
 import { Chant } from '@/lib/social/types';
-import { deleteChant, toggleRoar } from '@/lib/social/api';
+import { deleteChant, reportChant, toggleRoar } from '@/lib/social/api';
 import { useSocial } from './SupabaseProvider';
 import { UserAvatar } from './UserAvatar';
 
@@ -66,6 +66,40 @@ function RoarButton({
   );
 }
 
+function ReportButton({ chantId, onNeedSignIn }: { chantId: string; onNeedSignIn: () => void }) {
+  const { user } = useSocial();
+  const [reported, setReported] = useState(false);
+
+  if (reported) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
+        <ShieldCheck className="w-3 h-3" /> Reported
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={async () => {
+        if (!user) {
+          onNeedSignIn();
+          return;
+        }
+        setReported(true);
+        try {
+          await reportChant(chantId);
+        } catch {
+          setReported(false);
+        }
+      }}
+      className="text-faint hover:text-amber-500 transition-colors"
+      title="Report this chant"
+    >
+      <Flag className="w-3.5 h-3.5" />
+    </button>
+  );
+}
+
 export function ChantFeed({
   chants,
   onRoarToggled,
@@ -77,7 +111,7 @@ export function ChantFeed({
   onDeleted: (chantId: string) => void;
   onNeedSignIn: () => void;
 }) {
-  const { user } = useSocial();
+  const { user, profile } = useSocial();
 
   if (chants.length === 0) {
     return (
@@ -91,6 +125,7 @@ export function ChantFeed({
     <div className="space-y-3">
       {chants.map((chant) => {
         const isMine = user?.id === chant.userId;
+        const canDelete = isMine || profile?.isAdmin;
         const name = chant.author.displayName || chant.author.username;
         return (
           <div
@@ -112,7 +147,7 @@ export function ChantFeed({
                 </p>
                 <div className="flex items-center gap-2 mt-2">
                   <RoarButton chant={chant} onToggled={onRoarToggled} onNeedSignIn={onNeedSignIn} />
-                  {isMine && (
+                  {canDelete && (
                     <button
                       onClick={async () => {
                         onDeleted(chant.id); // optimistic
@@ -123,11 +158,12 @@ export function ChantFeed({
                         }
                       }}
                       className="text-faint hover:text-red-500 transition-colors"
-                      title="Delete chant"
+                      title={isMine ? 'Delete chant' : 'Remove chant (admin)'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
+                  {!isMine && <ReportButton chantId={chant.id} onNeedSignIn={onNeedSignIn} />}
                 </div>
               </div>
             </div>

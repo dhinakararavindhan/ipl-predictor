@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { LogOut, Pencil, UserRound } from 'lucide-react';
+import Link from 'next/link';
+import { LogOut, Pencil, ShieldCheck, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useSocial } from './SupabaseProvider';
@@ -59,6 +60,14 @@ export function AuthButton() {
               <Pencil className="w-3.5 h-3.5" />
               Edit profile
             </Button>
+            {profile?.isAdmin && (
+              <Link href="/admin" className="block" onClick={() => setMenuOpen(false)}>
+                <Button variant="outline" className="w-full justify-start">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Moderation
+                </Button>
+              </Link>
+            )}
             <Button
               variant="ghost"
               className="w-full justify-start"

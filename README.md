@@ -59,9 +59,25 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 Setup:
 
 1. Create a free project at [supabase.com](https://supabase.com/dashboard).
-2. Open the SQL editor and run `supabase/migrations/0001_social.sql` (creates tables, row-level security, the signup trigger, and seeds the fixtures).
+2. Open the SQL editor and run `supabase/migrations/0001_social.sql`, then `supabase/migrations/0002_admin.sql` (tables, row-level security, signup trigger, fixture seed, and moderation).
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
+
+### Admin & moderation
+
+Admins keep the feeds clean: they can remove any Chant, review fan reports, and ban/unban accounts. Fans see a flag button on every Chant to report it.
+
+1. Sign up in the app with the account you want as admin.
+2. In the Supabase SQL editor, run:
+
+   ```sql
+   update public.profiles set is_admin = true
+   where id = (select id from auth.users where email = 'you@example.com');
+   ```
+
+3. Reload the app — a **Moderation** entry appears in your account menu (or go to `/admin`).
+
+The dashboard shows totals (fans, chants, roars, calls, reports), the reported-chants queue (delete the chant, ban the author, or dismiss the report), and the latest chants across all matches. All admin powers are enforced by row-level security, and privilege flags (`is_admin`, `is_banned`) are trigger-guarded so users cannot change them through the API. Banned fans keep read access but cannot post, roar, call, or report.
 
 Notes:
 

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatNRR, formatProbability, getProbabilityColor } from '@/lib/utils';
 import { getMatchPredictions } from '@/lib/simulation';
+import { useChantCounts } from '@/lib/social/useChantCounts';
 import { ArrowLeft, Trophy, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -20,11 +21,12 @@ export default function TeamPage({ params }: { params: Promise<{ id: string }> }
   const { teams, fixtures, simulationResults } = useIPLStore();
 
   const team = getTeamById(id);
+  const teamFixtures = fixtures.filter((f) => f.team1Id === id || f.team2Id === id);
+  const upcomingFixtures = teamFixtures.filter((f) => !f.isCompleted);
+  const chantCounts = useChantCounts(upcomingFixtures.map((f) => f.id));
   if (!team) notFound();
 
   const result = simulationResults.find((r) => r.teamId === id);
-  const teamFixtures = fixtures.filter((f) => f.team1Id === id || f.team2Id === id);
-  const upcomingFixtures = teamFixtures.filter((f) => !f.isCompleted);
 
   const scenarios = getQualificationScenarios(team, teams, fixtures);
   const predictions = getMatchPredictions(teams, fixtures);
@@ -278,6 +280,7 @@ export default function TeamPage({ params }: { params: Promise<{ id: string }> }
                   fixture={fixture}
                   showSimulator
                   team1WinProb={isTeam1 ? prob : prob !== undefined ? 1 - prob : undefined}
+                  chantCount={chantCounts[fixture.id]}
                 />
               );
             })}

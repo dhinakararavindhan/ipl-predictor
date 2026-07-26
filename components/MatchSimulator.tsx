@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useIPLStore } from '@/lib/store';
 import { getMatchPredictions } from '@/lib/simulation';
+import { useChantCounts } from '@/lib/social/useChantCounts';
 import { FixtureCard } from './FixtureCard';
 import { Button } from './ui/button';
 import { RotateCcw, Zap, StopCircle } from 'lucide-react';
@@ -24,6 +25,7 @@ export function MatchSimulator() {
     if (filter === 'completed') return f.isCompleted;
     return true;
   });
+  const chantCounts = useChantCounts(filteredFixtures.map((f) => f.id));
 
   const pendingCount = fixtures.filter((f) => !f.isCompleted).length;
   const completedCount = fixtures.filter((f) => f.isCompleted).length;
@@ -154,6 +156,7 @@ export function MatchSimulator() {
               showSimulator
               team1WinProb={predMap.get(fixture.id)}
               isPulsing={currentlySimulating === fixture.id}
+              chantCount={chantCounts[fixture.id]}
             />
           ))}
         </div>

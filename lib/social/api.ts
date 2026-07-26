@@ -2,7 +2,7 @@
 // Postgres RLS is the trust boundary — these calls run in the browser.
 
 import { getSupabase } from '@/lib/supabase/client';
-import { Call, CallSplit, Chant, ChantAuthor, Profile } from './types';
+import { AdminChant, AdminStats, Call, CallSplit, Chant, ChantAuthor, Profile, Report } from './types';
 
 function supabaseOrThrow() {
   const supabase = getSupabase();
@@ -27,6 +27,8 @@ export function mapProfile(raw: any): Profile {
     displayName: raw.display_name ?? null,
     favoriteTeamId: raw.favorite_team_id ?? null,
     avatarUrl: raw.avatar_url ?? null,
+    isAdmin: raw.is_admin ?? false,
+    isBanned: raw.is_banned ?? false,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -175,13 +177,117 @@ export async function fetchChantCounts(matchIds: string[]): Promise<Record<strin
 
 export async function fetchProfile(userId: string): Promise<Profile | null> {
   const supabase = supabaseOrThrow();
+  // select * so this works whether or not the 0002_admin migration has run
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, favorite_team_id, avatar_url')
+    .select('*')
     .eq('id', userId)
     .maybeSingle();
   if (error) throw error;
   return data ? mapProfile(data) : null;
+}
+
+// ── Reports & moderation ────────────────────────────────────────────────────
+
+export async function reportChant(chantId: string, reason?: string): Promise<void> {
+  const supabase = supabaseOrThrow();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) throw new Error('Sign in to report');
+  const { error } = await supabase
+    .from('reports')
+    .insert({ chant_id: chantId, reporter_id: auth.user.id, reason: reason?.trim() || null });
+  // Reporting twice is a no-op, not an error
+  if (error && error.code !== '23505') throw error;
+}
+
+const REPORT_SELECT =
+  'id, chant_id, reason, created_at, reporter:profiles!reports_reporter_id_fkey(username, display_name, favorite_team_id, avatar_url), chant:chants(id, match_id, user_id, body, created_at, author:profiles(username, display_name, favorite_team_id, avatar_url, is_banned))';
+
+export async function fetchReports(): Promise<Report[]> {
+  const supabase = supabaseOrThrow();
+  const { data, error } = await supabase
+    .from('reports')
+    .select(REPORT_SELECT)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    chantId: row.chant_id,
+    reason: row.reason ?? null,
+    createdAt: row.created_at,
+    reporter: mapAuthor(row.reporter),
+    chant: row.chant
+      ? {
+          id: row.chant.id,
+          matchId: row.chant.match_id,
+          userId: row.chant.user_id,
+          body: row.chant.body,
+          createdAt: row.chant.created_at,
+          author: {
+            ...mapAuthor(row.chant.author),
+            userId: row.chant.user_id,
+            isBanned: row.chant.author?.is_banned ?? false,
+          },
+        }
+      : null,
+  }));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
+export async function dismissReport(reportId: string): Promise<void> {
+  const supabase = supabaseOrThrow();
+  const { error } = await supabase.from('reports').delete().eq('id', reportId);
+  if (error) throw error;
+}
+
+export async function fetchRecentChants(limit = 50): Promise<AdminChant[]> {
+  const supabase = supabaseOrThrow();
+  const { data, error } = await supabase
+    .from('chants')
+    .select('id, match_id, user_id, body, created_at, author:profiles(username, display_name, favorite_team_id, avatar_url, is_banned)')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    matchId: row.match_id,
+    userId: row.user_id,
+    body: row.body,
+    createdAt: row.created_at,
+    author: { ...mapAuthor(row.author), isBanned: row.author?.is_banned ?? false },
+  }));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
+export async function setUserBanned(userId: string, banned: boolean): Promise<void> {
+  const supabase = supabaseOrThrow();
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_banned: banned })
+    .eq('id', userId);
+  if (error) throw error;
+}
+
+export async function fetchAdminStats(): Promise<AdminStats> {
+  const supabase = supabaseOrThrow();
+  const count = async (table: string) => {
+    const { count: n, error } = await supabase
+      .from(table)
+      .select('*', { count: 'exact', head: true });
+    if (error) throw error;
+    return n ?? 0;
+  };
+  const [fans, chants, roars, calls, reports] = await Promise.all([
+    count('profiles'),
+    count('chants'),
+    count('roars'),
+    count('calls'),
+    count('reports'),
+  ]);
+  return { fans, chants, roars, calls, reports };
 }
 
 export async function updateProfile(

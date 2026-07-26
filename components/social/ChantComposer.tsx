@@ -38,7 +38,12 @@ export function ChantComposer({
       setBody('');
       onPosted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not post your chant');
+      const msg = err instanceof Error ? err.message : '';
+      setError(
+        msg.includes('row-level security')
+          ? "You can't post right now — your account may be restricted."
+          : msg || 'Could not post your chant'
+      );
     } finally {
       setBusy(false);
     }

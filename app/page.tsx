@@ -10,6 +10,7 @@ import { PlayoffSimulator } from '@/components/PlayoffProbabilitySimulator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableSkeleton, CardSkeleton, ChartSkeleton } from '@/components/LoadingSkeleton';
 import { getMatchPredictions } from '@/lib/simulation';
+import { useChantCounts } from '@/lib/social/useChantCounts';
 import { RefreshCw, Trophy } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,6 +22,7 @@ export default function HomePage() {
   const predMap = new Map(predictions.map((p) => [p.fixtureId, p.team1WinProbability]));
 
   const upcomingFixtures = fixtures.filter((f) => !f.isCompleted).slice(0, 6);
+  const chantCounts = useChantCounts(upcomingFixtures.map((f) => f.id));
 
   const sortedResults = [...simulationResults].sort(
     (a, b) => b.top4Probability - a.top4Probability
@@ -140,6 +142,7 @@ export default function HomePage() {
                     key={fixture.id}
                     fixture={fixture}
                     team1WinProb={predMap.get(fixture.id)}
+                    chantCount={chantCounts[fixture.id]}
                   />
                 ))
               )}

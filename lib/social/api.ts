@@ -187,6 +187,32 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
   return data ? mapProfile(data) : null;
 }
 
+// ── Leaderboard ─────────────────────────────────────────────────────────────
+
+export interface LeaderboardCallRow {
+  userId: string;
+  matchId: string;
+  predictedTeamId: string;
+  author: ChantAuthor;
+}
+
+export async function fetchAllCalls(): Promise<LeaderboardCallRow[]> {
+  const supabase = supabaseOrThrow();
+  const { data, error } = await supabase
+    .from('calls')
+    .select('user_id, match_id, predicted_team_id, author:profiles(username, display_name, favorite_team_id, avatar_url)')
+    .limit(5000);
+  if (error) throw error;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (data ?? []).map((row: any) => ({
+    userId: row.user_id,
+    matchId: row.match_id,
+    predictedTeamId: row.predicted_team_id,
+    author: mapAuthor(row.author),
+  }));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+}
+
 // ── Reports & moderation ────────────────────────────────────────────────────
 
 export async function reportChant(chantId: string, reason?: string): Promise<void> {

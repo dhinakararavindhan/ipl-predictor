@@ -6,7 +6,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { SupabaseProvider } from '@/components/social/SupabaseProvider';
 import { AuthButton } from '@/components/social/AuthButton';
 import Link from 'next/link';
-import { Activity, BarChart3, Zap, Radio, Lightbulb, Target, Wrench, Trophy } from 'lucide-react';
+import { Activity, BarChart3, Zap, Radio, Lightbulb, Target, Wrench, Trophy, Crown } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'IPL Playoff Lab — Live Playoff Simulator',
@@ -121,6 +121,13 @@ export default function RootLayout({
                   >
                     <BarChart3 className="w-3.5 h-3.5" />
                     <span className="hidden md:inline">Analytics</span>
+                  </Link>
+                  <Link
+                    href="/leaderboard"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
+                  >
+                    <Crown className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Fans</span>
                   </Link>
                 </div>
 

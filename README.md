@@ -11,6 +11,8 @@ A production-quality IPL 2026 playoff qualification simulator with Monte Carlo s
 - **Team Detail Pages** — Qualification paths, scenarios, strength ratings, finish distribution
 - **Analytics Dashboard** — Probability charts, NRR comparison, team strength breakdown
 - **Match Hubs (social)** — Every match has a shareable page where fans **Chant** (post), **Roar** (like), and make their **Call** (predict the winner), with a live community split
+- **Fan Leaderboard** — Fans ranked by correct Calls across the season (`/leaderboard`)
+- **Admin Moderation** — Report flags on chants, an admin dashboard (`/admin`) to review reports, remove chants, and ban accounts
 - **Dark Mode** — Premium sports analytics aesthetic, mobile-first
 
 ## Tech Stack

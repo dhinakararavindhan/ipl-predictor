@@ -6,7 +6,7 @@
 import { FIXTURES } from '../lib/data/fixtures';
 
 // Fixtures carry no time of day; assume the 19:30 IST evening start (14:00 UTC).
-// Calls lock at this time via RLS, so it only needs to be roughly right.
+// starts_at is informational — Calls lock via is_completed, not the clock.
 const START_TIME_UTC = 'T14:00:00Z';
 
 const rows = FIXTURES.map((f) => {

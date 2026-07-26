@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useIPLStore } from '@/lib/store';
 import { getTeamById } from '@/lib/data/teams';
+import { FIXTURES } from '@/lib/data/fixtures';
 import { TeamLogo } from './TeamLogo';
 import { Button } from './ui/button';
 import { useSocial } from './social/SupabaseProvider';
 import { SignInDialog } from './social/SignInDialog';
 import { fetchMyCalls, upsertCall } from '@/lib/social/api';
-import { hasMatchStarted } from '@/lib/social/match';
+import { isMatchLocked } from '@/lib/social/match';
 import { Target, Check, X, CloudUpload, UserRound } from 'lucide-react';
 
 interface Prediction {
@@ -44,7 +45,7 @@ function stampPrediction(fixtureId: string, predictedWinner: string): Prediction
 }
 
 export function PredictionGame() {
-  const { fixtures } = useIPLStore();
+  const { fixtures: simFixtures } = useIPLStore();
   const { configured, user, profile } = useSocial();
   const [localPredictions, setLocalPredictions] = useState<Prediction[]>([]);
   const [serverPredictions, setServerPredictions] = useState<Prediction[]>([]);
@@ -58,6 +59,11 @@ export function PredictionGame() {
   // otherwise everything stays in localStorage exactly as before.
   const useServer = configured && user !== null;
   const predictions = useServer ? serverPredictions : localPredictions;
+
+  // Server Calls are about real matches — grade and lock against the static
+  // fixture data, not the simulator-mutated store copy. Signed-out local play
+  // keeps the store so the game reacts to simulations as before.
+  const fixtures = useServer ? FIXTURES : simFixtures;
 
   const loadServerCalls = useCallback(() => {
     if (!user) return Promise.resolve();
@@ -131,7 +137,7 @@ export function PredictionGame() {
     const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
     const importable = localPredictions.filter((p) => {
       const fixture = fixtureMap.get(p.fixtureId);
-      return fixture && !hasMatchStarted(fixture) && !predictionMap.has(p.fixtureId);
+      return fixture && !isMatchLocked(fixture) && !predictionMap.has(p.fixtureId);
     });
     let imported = 0;
     for (const p of importable) {
@@ -141,11 +147,16 @@ export function PredictionGame() {
       } catch { /* locked or invalid — skip */ }
     }
     const skipped = localPredictions.length - imported;
-    setImportResult(
-      `${imported} imported${skipped > 0 ? `, ${skipped} skipped (already started or already called)` : ''}`
-    );
-    localStorage.setItem(IMPORTED_KEY, '1');
-    setImportHandled(true);
+    if (imported > 0 || importable.length === 0) {
+      setImportResult(
+        `${imported} imported${skipped > 0 ? `, ${skipped} skipped (already decided or already called)` : ''}`
+      );
+      localStorage.setItem(IMPORTED_KEY, '1');
+      setImportHandled(true);
+    } else {
+      // nothing made it through (e.g. offline) — keep the offer alive
+      setImportResult('Import failed — please try again');
+    }
     await loadServerCalls();
   };
 
@@ -251,7 +262,7 @@ export function PredictionGame() {
             if (!team1 || !team2) return null;
 
             const existing = predictionMap.get(fixture.id);
-            const locked = useServer && hasMatchStarted(fixture);
+            const locked = useServer && isMatchLocked(fixture);
 
             return (
               <div

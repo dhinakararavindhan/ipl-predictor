@@ -14,11 +14,14 @@ export function useRealtimeMatch(
     const supabase = getSupabase();
     if (!supabase) return;
 
+    // chants/roars are unfiltered on purpose: DELETE payloads only carry the
+    // primary key (no match_id), so a filtered listener would miss removals.
+    // The handler is a cheap single-match refetch either way.
     const channel = supabase
       .channel(`match-${matchId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'chants', filter: `match_id=eq.${matchId}` },
+        { event: '*', schema: 'public', table: 'chants' },
         onChange.chants
       )
       .on(

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Check, Lock, Megaphone, X } from 'lucide-react';
 import { Fixture, Team } from '@/lib/types';
 import { CallSplit } from '@/lib/social/types';
-import { hasMatchStarted } from '@/lib/social/match';
+import { isMatchLocked } from '@/lib/social/match';
 import { upsertCall } from '@/lib/social/api';
 import { TeamLogo } from '@/components/TeamLogo';
 import { useSocial } from './SupabaseProvider';
@@ -16,6 +16,7 @@ interface CallWidgetProps {
   myCallTeamId: string | null;
   split: CallSplit;
   onCallMade: (teamId: string) => void;
+  onCallFailed: () => void;
   onNeedSignIn: () => void;
 }
 
@@ -26,13 +27,14 @@ export function CallWidget({
   myCallTeamId,
   split,
   onCallMade,
+  onCallFailed,
   onNeedSignIn,
 }: CallWidgetProps) {
   const { user } = useSocial();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const locked = hasMatchStarted(fixture);
+  const locked = isMatchLocked(fixture);
   const decided = fixture.isCompleted && fixture.winnerId;
   const myCallCorrect = decided && myCallTeamId ? fixture.winnerId === myCallTeamId : null;
 
@@ -50,13 +52,17 @@ export function CallWidget({
     }
     setBusy(true);
     setError(null);
-    const previous = myCallTeamId;
     onCallMade(teamId); // optimistic
     try {
       await upsertCall(fixture.id, teamId);
     } catch (err) {
-      if (previous) onCallMade(previous);
-      setError(err instanceof Error ? err.message : 'Could not save your call');
+      onCallFailed(); // refetch true state — a local revert can't undo the split
+      const msg = err instanceof Error ? err.message : '';
+      setError(
+        msg.includes('row-level security')
+          ? "Your call couldn't be saved — the match may be decided or your account restricted."
+          : msg || 'Could not save your call'
+      );
     } finally {
       setBusy(false);
     }

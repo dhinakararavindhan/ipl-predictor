@@ -8,8 +8,9 @@
 
 -- ── Reference table for fixtures ────────────────────────────────────────────
 -- Mirrors lib/data/fixtures.ts; re-seed with scripts/generate-matches-sql.ts
--- when fixtures change. starts_at approximates the 19:30 IST evening start
--- (fixtures carry no time of day) — Calls lock at this time via RLS.
+-- when fixtures change. Calls lock via RLS once is_completed is true (the
+-- fixture dataset is a season snapshot, so wall-clock time can't be used);
+-- starts_at (19:30 IST approximation) is informational.
 create table public.matches (
   id text primary key,              -- 'm1'..'m70'
   team1_id text not null,           -- 'rcb', 'csk', ...
@@ -54,6 +55,19 @@ create table public.calls (
 );
 create index calls_match_idx on public.calls (match_id);
 
+-- ── Table privileges ────────────────────────────────────────────────────────
+-- RLS below decides which rows; these grants decide which verbs. Explicit so
+-- the migration works regardless of the project's default privileges.
+grant select on public.matches to anon, authenticated;
+grant select on public.profiles to anon, authenticated;
+grant insert, update on public.profiles to authenticated;
+grant select on public.chants to anon, authenticated;
+grant insert, delete on public.chants to authenticated;
+grant select on public.roars to anon, authenticated;
+grant insert, delete on public.roars to authenticated;
+grant select on public.calls to anon, authenticated;
+grant insert, update on public.calls to authenticated;
+
 -- ── Row Level Security ──────────────────────────────────────────────────────
 -- Feeds are public to read; users may only write their own rows.
 -- matches has no write policies: only the service role / SQL editor edits it.
@@ -92,19 +106,25 @@ create policy "unroar as yourself" on public.roars
 alter table public.calls enable row level security;
 create policy "calls are public" on public.calls
   for select using (true);
--- Calls can be made and changed only until the match starts.
+-- Calls can be made and changed only while the match is undecided.
 create policy "call before start" on public.calls
   for insert with check (
     auth.uid() = user_id
     and exists (select 1 from public.matches m
-                where m.id = match_id and m.starts_at > now())
+                where m.id = match_id and not m.is_completed)
   );
+-- The lock must be in USING too: otherwise a decided (locked) call row could
+-- be UPDATEd to point at a still-open match, erasing a wrong prediction.
 create policy "change call before start" on public.calls
-  for update using (auth.uid() = user_id)
+  for update using (
+    auth.uid() = user_id
+    and exists (select 1 from public.matches m
+                where m.id = match_id and not m.is_completed)
+  )
   with check (
     auth.uid() = user_id
     and exists (select 1 from public.matches m
-                where m.id = match_id and m.starts_at > now())
+                where m.id = match_id and not m.is_completed)
   );
 
 -- ── Auto-create a profile on signup ─────────────────────────────────────────

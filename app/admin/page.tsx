@@ -162,7 +162,8 @@ export default function AdminPage() {
     );
   }
 
-  if (loading) {
+  // profile loads after the session — don't flash "Admins only" at real admins
+  if (loading || (user && !profile)) {
     return <div className="text-center py-16 text-sm text-muted">Loading…</div>;
   }
 

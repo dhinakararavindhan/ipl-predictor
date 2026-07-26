@@ -39,7 +39,9 @@ export async function fetchChants(matchId: string, myUserId?: string): Promise<C
   const supabase = supabaseOrThrow();
   const { data, error } = await supabase
     .from('chants')
-    .select('id, match_id, user_id, body, created_at, author:profiles(username, display_name, favorite_team_id, avatar_url), roars(user_id)')
+    // profiles must be FK-hinted: chants relates to profiles both directly
+    // (user_id) and many-to-many through roars
+    .select('id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url), roars(user_id)')
     .eq('match_id', matchId)
     .order('created_at', { ascending: false })
     .limit(100);
@@ -201,6 +203,7 @@ export async function fetchAllCalls(): Promise<LeaderboardCallRow[]> {
   const { data, error } = await supabase
     .from('calls')
     .select('user_id, match_id, predicted_team_id, author:profiles(username, display_name, favorite_team_id, avatar_url)')
+    .order('created_at', { ascending: true }) // deterministic if we ever hit the cap
     .limit(5000);
   if (error) throw error;
   /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -227,7 +230,7 @@ export async function reportChant(chantId: string, reason?: string): Promise<voi
 }
 
 const REPORT_SELECT =
-  'id, chant_id, reason, created_at, reporter:profiles!reports_reporter_id_fkey(username, display_name, favorite_team_id, avatar_url), chant:chants(id, match_id, user_id, body, created_at, author:profiles(username, display_name, favorite_team_id, avatar_url, is_banned))';
+  'id, chant_id, reason, created_at, reporter:profiles!reports_reporter_id_fkey(username, display_name, favorite_team_id, avatar_url), chant:chants(id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned))';
 
 export async function fetchReports(): Promise<Report[]> {
   const supabase = supabaseOrThrow();
@@ -272,7 +275,7 @@ export async function fetchRecentChants(limit = 50): Promise<AdminChant[]> {
   const supabase = supabaseOrThrow();
   const { data, error } = await supabase
     .from('chants')
-    .select('id, match_id, user_id, body, created_at, author:profiles(username, display_name, favorite_team_id, avatar_url, is_banned)')
+    .select('id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned)')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;

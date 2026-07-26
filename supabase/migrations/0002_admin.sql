@@ -36,6 +36,8 @@ create table public.reports (
   unique (chant_id, reporter_id)    -- one report per fan per chant
 );
 
+grant select, insert, delete on public.reports to authenticated;
+
 alter table public.reports enable row level security;
 create policy "admins read reports" on public.reports
   for select using (public.is_admin());
@@ -71,35 +73,56 @@ create policy "call before start" on public.calls
     auth.uid() = user_id
     and not public.is_banned()
     and exists (select 1 from public.matches m
-                where m.id = match_id and m.starts_at > now())
+                where m.id = match_id and not m.is_completed)
   );
 
 drop policy "change call before start" on public.calls;
+-- lock in USING as well, so decided call rows cannot be edited at all
 create policy "change call before start" on public.calls
-  for update using (auth.uid() = user_id)
+  for update using (
+    auth.uid() = user_id
+    and exists (select 1 from public.matches m
+                where m.id = match_id and not m.is_completed)
+  )
   with check (
     auth.uid() = user_id
     and not public.is_banned()
     and exists (select 1 from public.matches m
-                where m.id = match_id and m.starts_at > now())
+                where m.id = match_id and not m.is_completed)
   );
 
 -- ── Guard privilege columns ─────────────────────────────────────────────────
--- "update own profile" (0001) would otherwise let any user set their own
--- is_admin/is_banned. Only admins may change them through the API; direct
--- SQL-editor/service-role sessions (auth.uid() is null) stay unrestricted.
+-- "update own profile" / "insert own profile" (0001) would otherwise let a
+-- user set their own is_admin/is_banned (a user whose profile row is missing
+-- could even INSERT one with is_admin = true). Only admins may change these
+-- flags through the API; direct SQL-editor/service-role sessions
+-- (auth.uid() is null) stay unrestricted.
 create function public.guard_profile_privileges() returns trigger
 language plpgsql security definer set search_path = public as $$
+declare
+  old_admin boolean := false;
+  old_banned boolean := false;
 begin
+  if tg_op = 'UPDATE' then
+    old_admin := old.is_admin;
+    old_banned := old.is_banned;
+  end if;
   if auth.uid() is not null
      and not public.is_admin()
-     and (new.is_admin is distinct from old.is_admin
-          or new.is_banned is distinct from old.is_banned) then
+     and (new.is_admin is distinct from old_admin
+          or new.is_banned is distinct from old_banned) then
     raise exception 'not allowed to change privilege flags';
   end if;
   return new;
 end $$;
 
 create trigger guard_profile_privileges
-  before update on public.profiles
+  before insert or update on public.profiles
   for each row execute function public.guard_profile_privileges();
+
+-- Banned fans keep read access but cannot rewrite their public identity
+-- (offensive renames would still show on their existing chants).
+drop policy "update own profile" on public.profiles;
+create policy "update own profile" on public.profiles
+  for update using (auth.uid() = id)
+  with check (auth.uid() = id and not public.is_banned());

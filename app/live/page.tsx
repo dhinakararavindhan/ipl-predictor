@@ -12,8 +12,9 @@ import { LiveNRRTracker } from '@/components/LiveNRRTracker';
 import { WinProbabilityGraph } from '@/components/WinProbabilityGraph';
 import { NRRCalculator } from '@/components/NRRCalculator';
 import { formatNRR } from '@/lib/utils';
-import { Radio, RefreshCw, Wifi, WifiOff, Clock } from 'lucide-react';
+import { Radio, RefreshCw, Wifi, WifiOff, Clock, MessagesSquare } from 'lucide-react';
 import { Team } from '@/lib/types';
+import Link from 'next/link';
 
 const REFRESH_INTERVAL = 30_000; // 30 seconds
 
@@ -142,20 +143,20 @@ function FreeApiLiveCard({ match, source }: { match: FreeApiMatch; source: strin
 
   // Win probability from our simulation
   let t1Prob = 0.5;
-  if (team1 && team2) {
-    const todayFixture = fixtures.find(
-      (f) => !f.isCompleted &&
-        ((f.team1Id === team1.id && f.team2Id === team2.id) ||
-         (f.team1Id === team2.id && f.team2Id === team1.id))
-    );
-    if (todayFixture) {
-      const predictions = getMatchPredictions(teams, fixtures);
-      const pred = predictions.find((p) => p.fixtureId === todayFixture.id);
-      if (pred) {
-        t1Prob = todayFixture.team1Id === team1.id
-          ? pred.team1WinProbability
-          : 1 - pred.team1WinProbability;
-      }
+  const todayFixture = team1 && team2
+    ? fixtures.find(
+        (f) => !f.isCompleted &&
+          ((f.team1Id === team1.id && f.team2Id === team2.id) ||
+           (f.team1Id === team2.id && f.team2Id === team1.id))
+      )
+    : undefined;
+  if (team1 && team2 && todayFixture) {
+    const predictions = getMatchPredictions(teams, fixtures);
+    const pred = predictions.find((p) => p.fixtureId === todayFixture.id);
+    if (pred) {
+      t1Prob = todayFixture.team1Id === team1.id
+        ? pred.team1WinProbability
+        : 1 - pred.team1WinProbability;
     }
   }
 
@@ -225,6 +226,16 @@ function FreeApiLiveCard({ match, source }: { match: FreeApiMatch; source: strin
           <LiveNRRTracker team1={team1} team2={team2} team1Score={match.score_1} team2Score={match.score_2} />
 
           <PlayoffImpact team1={team1} team2={team2} />
+
+          {todayFixture && (
+            <Link
+              href={`/match/${todayFixture.id}`}
+              className="flex items-center justify-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors rounded-lg px-3 py-2"
+            >
+              <MessagesSquare className="w-3.5 h-3.5" />
+              Join the Chants — live match hub
+            </Link>
+          )}
         </>
       )}
     </div>
@@ -300,6 +311,14 @@ function TodaysMatchCard() {
 
       <WinBar team1Name={team1.shortName} team2Name={team2.shortName} prob={t1Prob} />
       <PlayoffImpact team1={team1} team2={team2} />
+
+      <Link
+        href={`/match/${fixture.id}`}
+        className="flex items-center justify-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors rounded-lg px-3 py-2"
+      >
+        <MessagesSquare className="w-3.5 h-3.5" />
+        Join the Chants — match hub
+      </Link>
     </div>
   );
 }

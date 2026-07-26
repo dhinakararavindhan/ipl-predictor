@@ -9,7 +9,7 @@ import { formatDate } from '@/lib/utils';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { fetchCallSplit, fetchChants, fetchMyCall } from '@/lib/social/api';
 import { Chant, CallSplit } from '@/lib/social/types';
-import { hasMatchStarted } from '@/lib/social/match';
+import { isMatchLive } from '@/lib/social/match';
 import { useRealtimeMatch } from '@/lib/social/useRealtimeMatch';
 import { TeamLogo } from '@/components/TeamLogo';
 import { useSocial } from './SupabaseProvider';
@@ -24,6 +24,7 @@ const EMPTY_SPLIT: CallSplit = { total: 0, byTeam: {} };
 export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
   const configured = isSupabaseConfigured();
   const { user } = useSocial();
+  const userId = user?.id;
   const [chants, setChants] = useState<Chant[]>([]);
   const [split, setSplit] = useState<CallSplit>(EMPTY_SPLIT);
   const [myCallTeamId, setMyCallTeamId] = useState<string | null>(null);
@@ -34,18 +35,18 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
 
   const refetchChants = useCallback(() => {
     if (!configured) return;
-    fetchChants(fixture.id, user?.id).then(setChants).catch(() => {});
-  }, [configured, fixture.id, user?.id]);
+    fetchChants(fixture.id, userId).then(setChants).catch(() => {});
+  }, [configured, fixture.id, userId]);
 
   const refetchCalls = useCallback(() => {
     if (!configured) return;
     fetchCallSplit(fixture.id).then(setSplit).catch(() => {});
-    if (user) {
-      fetchMyCall(fixture.id, user.id)
+    if (userId) {
+      fetchMyCall(fixture.id, userId)
         .then((call) => setMyCallTeamId(call?.predictedTeamId ?? null))
         .catch(() => {});
     }
-  }, [configured, fixture.id, user]);
+  }, [configured, fixture.id, userId]);
 
   useEffect(() => {
     refetchChants();
@@ -75,7 +76,7 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
   // signed-out users have no call of their own, whatever state we last held
   const effectiveMyCall = user ? myCallTeamId : null;
   const winner = fixture.winnerId ? getTeamById(fixture.winnerId) : undefined;
-  const started = hasMatchStarted(fixture);
+  const live = isMatchLive(fixture);
   const venueName = fixture.venue.split(',')[0];
 
   const onRoarToggled = (chantId: string, roared: boolean) => {
@@ -89,16 +90,15 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
   };
 
   const onCallMade = (teamId: string) => {
-    setMyCallTeamId((prev) => {
-      // keep the split responsive without waiting for the refetch
-      setSplit((s) => {
-        const byTeam = { ...s.byTeam };
-        if (prev) byTeam[prev] = Math.max(0, (byTeam[prev] ?? 0) - 1);
-        byTeam[teamId] = (byTeam[teamId] ?? 0) + 1;
-        return { total: prev ? s.total : s.total + 1, byTeam };
-      });
-      return teamId;
+    // keep the split responsive without waiting for the refetch
+    const prev = myCallTeamId;
+    setSplit((s) => {
+      const byTeam = { ...s.byTeam };
+      if (prev) byTeam[prev] = Math.max(0, (byTeam[prev] ?? 0) - 1);
+      byTeam[teamId] = (byTeam[teamId] ?? 0) + 1;
+      return { total: prev ? s.total : s.total + 1, byTeam };
     });
+    setMyCallTeamId(teamId);
   };
 
   return (
@@ -138,7 +138,7 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
               ) : (
                 <span className="text-xs text-muted">No result</span>
               )
-            ) : started ? (
+            ) : live ? (
               <span className="text-xs font-semibold text-red-500 animate-pulse">In play</span>
             ) : (
               <span className="text-xs text-muted">Upcoming</span>
@@ -168,6 +168,7 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
           myCallTeamId={effectiveMyCall}
           split={split}
           onCallMade={onCallMade}
+          onCallFailed={refetchCalls}
           onNeedSignIn={() => setSignInOpen(true)}
         />
       ) : (

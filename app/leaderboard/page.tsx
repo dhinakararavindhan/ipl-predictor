@@ -53,13 +53,19 @@ export default function LeaderboardPage() {
   const { user } = useSocial();
   const [rows, setRows] = useState<LeaderboardCallRow[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
     fetchAllCalls()
-      .then(setRows)
-      .catch(() => {})
-      .finally(() => setLoaded(true));
+      .then((data) => {
+        setRows(data);
+        setLoaded(true);
+      })
+      .catch(() => {
+        setLoadError(true);
+        setLoaded(true);
+      });
   }, []);
 
   const entries = useMemo(() => rankEntries(rows), [rows]);
@@ -86,6 +92,10 @@ export default function LeaderboardPage() {
 
       {!loaded ? (
         <div className="text-center py-12 text-sm text-muted">Loading the standings…</div>
+      ) : loadError ? (
+        <div className="text-center py-12 text-sm text-red-500">
+          Couldn&apos;t load the leaderboard — check your connection and refresh.
+        </div>
       ) : entries.length === 0 ? (
         <div className="card rounded-2xl p-8 text-center space-y-2">
           <Megaphone className="w-6 h-6 mx-auto text-indigo-500" />

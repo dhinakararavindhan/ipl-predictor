@@ -56,7 +56,7 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 
 - **Chant** — post under the match (up to 500 characters)
 - **Roar** — like a Chant (one Roar per fan per Chant)
-- **Call** — predict the winner; Calls lock when the match starts, and the hub shows the crowd's split
+- **Call** — predict the winner; Calls lock once the match result is recorded, and the hub shows the crowd's split
 
 Setup:
 
@@ -80,6 +80,8 @@ Admins keep the feeds clean: they can remove any Chant, review fan reports, and 
 3. Reload the app — a **Moderation** entry appears in your account menu (or go to `/admin`).
 
 The dashboard shows totals (fans, chants, roars, calls, reports), the reported-chants queue (delete the chant, ban the author, or dismiss the report), and the latest chants across all matches. All admin powers are enforced by row-level security, and privilege flags (`is_admin`, `is_banned`) are trigger-guarded so users cannot change them through the API. Banned fans keep read access but cannot post, roar, call, or report.
+
+Local development (no cloud project needed): with Docker running, `npx supabase start` boots a full local stack (`supabase/config.toml` is checked in; migrations apply automatically — use `npx supabase db reset` to reapply). Point `.env.local` at the printed `API_URL` and anon key.
 
 Notes:
 

@@ -20,9 +20,12 @@ export async function generateMetadata({
   const team1 = getTeamById(fixture.team1Id);
   const team2 = getTeamById(fixture.team2Id);
   const title = `${team1?.shortName} vs ${team2?.shortName} · ${formatDate(fixture.date)} — Match Hub`;
+  const description = `Chants, Roars and Calls for ${team1?.name} vs ${team2?.name} at ${fixture.venue}.`;
   return {
     title,
-    description: `Chants, Roars and Calls for ${team1?.name} vs ${team2?.name} at ${fixture.venue}.`,
+    description,
+    openGraph: { title, description, type: 'website' },
+    twitter: { card: 'summary', title, description },
   };
 }
 

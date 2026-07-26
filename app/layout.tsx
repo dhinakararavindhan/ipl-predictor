@@ -3,6 +3,8 @@ import './globals.css';
 import { SimulationRunner } from '@/components/SimulationRunner';
 import { ThemeProvider } from '@/lib/theme';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SupabaseProvider } from '@/components/social/SupabaseProvider';
+import { AuthButton } from '@/components/social/AuthButton';
 import Link from 'next/link';
 import { Activity, BarChart3, Zap, Radio, Lightbulb, Target, Wrench, Trophy } from 'lucide-react';
 
@@ -30,6 +32,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen" style={{ background: 'var(--bg)', color: 'var(--text)' }}>
         <ThemeProvider>
+        <SupabaseProvider>
           <SimulationRunner />
 
           {/* Navigation */}
@@ -127,6 +130,7 @@ export default function RootLayout({
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">LIVE</span>
                   </div>
+                  <AuthButton />
                   <ThemeToggle />
                 </div>
               </div>
@@ -145,6 +149,7 @@ export default function RootLayout({
               <p className="mt-1">Probabilities based on 10,000 Monte Carlo simulations · Data from ESPNCricinfo</p>
             </div>
           </footer>
+        </SupabaseProvider>
         </ThemeProvider>
       </body>
     </html>

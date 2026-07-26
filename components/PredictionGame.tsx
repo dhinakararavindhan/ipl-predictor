@@ -1,11 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useIPLStore } from '@/lib/store';
 import { getTeamById } from '@/lib/data/teams';
 import { TeamLogo } from './TeamLogo';
 import { Button } from './ui/button';
-import { Trophy, Target, Check, X } from 'lucide-react';
+import { useSocial } from './social/SupabaseProvider';
+import { SignInDialog } from './social/SignInDialog';
+import { fetchMyCalls, upsertCall } from '@/lib/social/api';
+import { hasMatchStarted } from '@/lib/social/match';
+import { Target, Check, X, CloudUpload, UserRound } from 'lucide-react';
 
 interface Prediction {
   fixtureId: string;
@@ -22,6 +26,7 @@ interface PredictionResult {
 
 const STORAGE_KEY = 'ipl-predictions';
 const NAME_KEY = 'ipl-predictor-name';
+const IMPORTED_KEY = 'ipl-predictions-imported';
 
 function loadPredictions(): Prediction[] {
   if (typeof window === 'undefined') return [];
@@ -34,19 +39,55 @@ function savePredictions(predictions: Prediction[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(predictions));
 }
 
+function stampPrediction(fixtureId: string, predictedWinner: string): Prediction {
+  return { fixtureId, predictedWinner, timestamp: Date.now() };
+}
+
 export function PredictionGame() {
   const { fixtures } = useIPLStore();
-  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const { configured, user, profile } = useSocial();
+  const [localPredictions, setLocalPredictions] = useState<Prediction[]>([]);
+  const [serverPredictions, setServerPredictions] = useState<Prediction[]>([]);
   const [name, setName] = useState('');
   const [showNameInput, setShowNameInput] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [importHandled, setImportHandled] = useState(true);
+  const [importResult, setImportResult] = useState<string | null>(null);
+
+  // Signed in (with Supabase configured) → Calls live on the server;
+  // otherwise everything stays in localStorage exactly as before.
+  const useServer = configured && user !== null;
+  const predictions = useServer ? serverPredictions : localPredictions;
+
+  const loadServerCalls = useCallback(() => {
+    if (!user) return Promise.resolve();
+    return fetchMyCalls(user.id)
+      .then((calls) =>
+        setServerPredictions(
+          calls.map((c) => ({
+            fixtureId: c.matchId,
+            predictedWinner: c.predictedTeamId,
+            timestamp: new Date(c.createdAt).getTime(),
+          }))
+        )
+      )
+      .catch(() => { /* keep whatever we had */ });
+  }, [user]);
 
   useEffect(() => {
-    setPredictions(loadPredictions());
+    setLocalPredictions(loadPredictions());
     setName(localStorage.getItem(NAME_KEY) ?? '');
+    setImportHandled(Boolean(localStorage.getItem(IMPORTED_KEY)));
   }, []);
 
+  useEffect(() => {
+    loadServerCalls();
+  }, [loadServerCalls]);
+
+  // Offer a one-time import of local picks once signed in
+  const showImport = useServer && !importHandled && localPredictions.length > 0;
+
   const pendingFixtures = fixtures.filter((f) => !f.isCompleted);
-  const completedFixtures = fixtures.filter((f) => f.isCompleted && f.winnerId);
 
   const predictionMap = new Map(predictions.map((p) => [p.fixtureId, p]));
 
@@ -67,11 +108,50 @@ export function PredictionGame() {
   const correctCount = decided.filter((r) => r.correct).length;
   const accuracy = decided.length > 0 ? (correctCount / decided.length) * 100 : 0;
 
-  const makePrediction = (fixtureId: string, winnerId: string) => {
-    const updated = predictions.filter((p) => p.fixtureId !== fixtureId);
-    updated.push({ fixtureId, predictedWinner: winnerId, timestamp: Date.now() });
-    setPredictions(updated);
-    savePredictions(updated);
+  const makePrediction = async (fixtureId: string, winnerId: string) => {
+    if (useServer) {
+      const previous = serverPredictions;
+      const updated = previous.filter((p) => p.fixtureId !== fixtureId);
+      updated.push(stampPrediction(fixtureId, winnerId));
+      setServerPredictions(updated);
+      try {
+        await upsertCall(fixtureId, winnerId);
+      } catch {
+        setServerPredictions(previous); // e.g. RLS lock after match start
+      }
+    } else {
+      const updated = localPredictions.filter((p) => p.fixtureId !== fixtureId);
+      updated.push(stampPrediction(fixtureId, winnerId));
+      setLocalPredictions(updated);
+      savePredictions(updated);
+    }
+  };
+
+  const importLocalPicks = async () => {
+    const fixtureMap = new Map(fixtures.map((f) => [f.id, f]));
+    const importable = localPredictions.filter((p) => {
+      const fixture = fixtureMap.get(p.fixtureId);
+      return fixture && !hasMatchStarted(fixture) && !predictionMap.has(p.fixtureId);
+    });
+    let imported = 0;
+    for (const p of importable) {
+      try {
+        await upsertCall(p.fixtureId, p.predictedWinner);
+        imported++;
+      } catch { /* locked or invalid — skip */ }
+    }
+    const skipped = localPredictions.length - imported;
+    setImportResult(
+      `${imported} imported${skipped > 0 ? `, ${skipped} skipped (already started or already called)` : ''}`
+    );
+    localStorage.setItem(IMPORTED_KEY, '1');
+    setImportHandled(true);
+    await loadServerCalls();
+  };
+
+  const dismissImport = () => {
+    localStorage.setItem(IMPORTED_KEY, '1');
+    setImportHandled(true);
   };
 
   const saveName = () => {
@@ -79,16 +159,27 @@ export function PredictionGame() {
     setShowNameInput(false);
   };
 
+  const playingAs = useServer
+    ? profile?.displayName || profile?.username || null
+    : name || null;
+
   return (
     <div className="space-y-4">
       {/* Header + stats */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-indigo-500" />
-          <span className="text-sm font-medium text-primary">Prediction Game</span>
+          <span className="text-sm font-medium text-primary">
+            {useServer ? 'Your Calls' : 'Prediction Game'}
+          </span>
         </div>
-        {name ? (
-          <span className="text-xs text-muted">Playing as <strong>{name}</strong></span>
+        {playingAs ? (
+          <span className="text-xs text-muted">Playing as <strong>{playingAs}</strong></span>
+        ) : useServer ? null : configured ? (
+          <Button size="sm" variant="ghost" onClick={() => setSignInOpen(true)}>
+            <UserRound className="w-3 h-3" />
+            Sign in to save
+          </Button>
         ) : (
           <Button size="sm" variant="ghost" onClick={() => setShowNameInput(true)}>
             Set name
@@ -96,7 +187,7 @@ export function PredictionGame() {
         )}
       </div>
 
-      {showNameInput && (
+      {showNameInput && !useServer && (
         <div className="flex gap-2">
           <input
             type="text"
@@ -110,12 +201,32 @@ export function PredictionGame() {
         </div>
       )}
 
+      {/* Import local picks into server Calls */}
+      {showImport && (
+        <div
+          className="rounded-xl p-3 flex items-center justify-between gap-2"
+          style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}
+        >
+          <span className="text-xs text-primary">
+            Found {localPredictions.length} picks saved in this browser — import them as Calls?
+          </span>
+          <div className="flex gap-1.5 shrink-0">
+            <Button size="sm" onClick={importLocalPicks}>
+              <CloudUpload className="w-3 h-3" />
+              Import
+            </Button>
+            <Button size="sm" variant="ghost" onClick={dismissImport}>Skip</Button>
+          </div>
+        </div>
+      )}
+      {importResult && <p className="text-xs text-emerald-600 dark:text-emerald-400">{importResult}</p>}
+
       {/* Score card */}
       {predictions.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-xl p-3 text-center" style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}>
             <div className="text-lg font-bold text-primary">{predictions.length}</div>
-            <div className="text-[10px] text-muted">Predictions</div>
+            <div className="text-[10px] text-muted">{useServer ? 'Calls' : 'Predictions'}</div>
           </div>
           <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
             <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{correctCount}</div>
@@ -130,7 +241,9 @@ export function PredictionGame() {
 
       {/* Upcoming matches to predict */}
       <div>
-        <div className="text-xs text-muted mb-2">Predict upcoming matches:</div>
+        <div className="text-xs text-muted mb-2">
+          {useServer ? 'Make your Calls on upcoming matches:' : 'Predict upcoming matches:'}
+        </div>
         <div className="space-y-2 max-h-[300px] overflow-y-auto">
           {pendingFixtures.slice(0, 8).map((fixture) => {
             const team1 = getTeamById(fixture.team1Id);
@@ -138,16 +251,22 @@ export function PredictionGame() {
             if (!team1 || !team2) return null;
 
             const existing = predictionMap.get(fixture.id);
+            const locked = useServer && hasMatchStarted(fixture);
 
             return (
               <div
                 key={fixture.id}
                 className="flex items-center gap-2 rounded-xl p-2"
-                style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}
+                style={{
+                  background: 'var(--row-hover)',
+                  border: '1px solid var(--border)',
+                  opacity: locked ? 0.5 : 1,
+                }}
               >
                 <button
                   onClick={() => makePrediction(fixture.id, team1.id)}
-                  className="flex-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-all"
+                  disabled={locked}
+                  className="flex-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-all disabled:cursor-not-allowed"
                   style={{
                     background: existing?.predictedWinner === team1.id ? `${team1.color}20` : 'transparent',
                     border: existing?.predictedWinner === team1.id ? `1.5px solid ${team1.color}` : '1px solid transparent',
@@ -160,7 +279,8 @@ export function PredictionGame() {
                 <span className="text-[10px] text-muted">vs</span>
                 <button
                   onClick={() => makePrediction(fixture.id, team2.id)}
-                  className="flex-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-all"
+                  disabled={locked}
+                  className="flex-1 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-all disabled:cursor-not-allowed"
                   style={{
                     background: existing?.predictedWinner === team2.id ? `${team2.color}20` : 'transparent',
                     border: existing?.predictedWinner === team2.id ? `1.5px solid ${team2.color}` : '1px solid transparent',
@@ -202,6 +322,8 @@ export function PredictionGame() {
           </div>
         </div>
       )}
+
+      <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />
     </div>
   );
 }

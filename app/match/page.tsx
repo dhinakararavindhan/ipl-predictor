@@ -10,7 +10,7 @@ import { NRRCalculator } from '@/components/NRRCalculator';
 import { PointsTable } from '@/components/PointsTable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatNRR } from '@/lib/utils';
-import { Trophy, Calculator, TrendingUp, Calendar, MapPin, ChevronLeft } from 'lucide-react';
+import { Trophy, Calculator, TrendingUp, Calendar, MapPin, ChevronLeft, MessagesSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MatchPredictorPage() {
@@ -127,6 +127,14 @@ export default function MatchPredictorPage() {
             <div className="text-base sm:text-lg font-bold text-primary">{(t2Prob * 100).toFixed(0)}%</div>
           </div>
         </div>
+
+        <Link
+          href={`/match/${selectedMatch.id}`}
+          className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs px-3 py-1.5 rounded-lg font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
+        >
+          <MessagesSquare className="w-3.5 h-3.5" />
+          Open Match Hub — Chants &amp; Calls
+        </Link>
       </div>
 
       {/* Main Content */}

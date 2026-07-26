@@ -6,16 +6,18 @@ import { TeamLogo } from './TeamLogo';
 import { formatDate, getImportanceLabel, getImportanceColor } from '@/lib/utils';
 import { useIPLStore } from '@/lib/store';
 import { Button } from './ui/button';
-import { RotateCcw } from 'lucide-react';
+import { MessagesSquare, RotateCcw } from 'lucide-react';
+import Link from 'next/link';
 
 interface FixtureCardProps {
   fixture: Fixture;
   showSimulator?: boolean;
   team1WinProb?: number;
   isPulsing?: boolean;
+  chantCount?: number;
 }
 
-export function FixtureCard({ fixture, showSimulator = false, team1WinProb, isPulsing = false }: FixtureCardProps) {
+export function FixtureCard({ fixture, showSimulator = false, team1WinProb, isPulsing = false, chantCount }: FixtureCardProps) {
   const { setFixtureWinner, resetFixture } = useIPLStore();
   const team1 = getTeamById(fixture.team1Id);
   const team2 = getTeamById(fixture.team2Id);
@@ -165,6 +167,22 @@ export function FixtureCard({ fixture, showSimulator = false, team1WinProb, isPu
           )}
         </div>
       )}
+
+      {/* Match hub link */}
+      <div className="mt-3 pt-3 flex justify-center" style={{ borderTop: '1px solid var(--border)' }}>
+        <Link
+          href={`/match/${fixture.id}`}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-indigo-500 transition-colors"
+        >
+          <MessagesSquare className="w-3.5 h-3.5" />
+          Match hub
+          {chantCount !== undefined && chantCount > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              {chantCount}
+            </span>
+          )}
+        </Link>
+      </div>
     </div>
   );
 }

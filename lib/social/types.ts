@@ -68,6 +68,17 @@ export interface AdminChant {
   author: ChantAuthor & { isBanned: boolean };
 }
 
+// Activity on your chants — powers the notifications bell
+export interface ActivityItem {
+  id: string; // unique per item (chant id or roar composite)
+  type: 'reply' | 'roar';
+  actor: ChantAuthor;
+  body: string; // the reply text, or your chant's text for roars
+  matchId: string;
+  matchLabel: string;
+  createdAt: string;
+}
+
 export interface AdminStats {
   fans: number;
   chants: number;

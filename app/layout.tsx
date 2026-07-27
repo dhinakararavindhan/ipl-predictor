@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/lib/theme';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { SupabaseProvider } from '@/components/social/SupabaseProvider';
 import { AuthButton } from '@/components/social/AuthButton';
+import { NotificationsBell } from '@/components/social/NotificationsBell';
 import Link from 'next/link';
 import { Activity, BarChart3, Zap, Radio, Lightbulb, Target, Wrench, Trophy, Crown, Globe } from 'lucide-react';
 
@@ -16,6 +17,12 @@ export const metadata: Metadata = {
   description:
     'Every match has a home crowd. Chant, Roar, and make your Call on cricket, football, basketball and more — plus a full IPL playoff lab.',
   keywords: ['sports', 'fans', 'cricket', 'IPL', 'football', 'predictions', 'community'],
+  manifest: '/manifest.webmanifest',
+  icons: { icon: '/icon.svg' },
+};
+
+export const viewport = {
+  themeColor: '#6366f1',
 };
 
 export default function RootLayout({
@@ -147,6 +154,7 @@ export default function RootLayout({
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">LIVE</span>
                   </div>
+                  <NotificationsBell />
                   <AuthButton />
                   <ThemeToggle />
                 </div>

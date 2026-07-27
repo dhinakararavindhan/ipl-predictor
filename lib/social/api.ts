@@ -3,7 +3,7 @@
 
 import { getSupabase } from '@/lib/supabase/client';
 import { matchLabel } from './matches';
-import { AdminChant, AdminStats, Call, CallSplit, Chant, ChantAuthor, Profile, Report } from './types';
+import { ActivityItem, AdminChant, AdminStats, Call, CallSplit, Chant, ChantAuthor, Profile, Report } from './types';
 
 function supabaseOrThrow() {
   const supabase = getSupabase();
@@ -204,6 +204,78 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
     .maybeSingle();
   if (error) throw error;
   return data ? mapProfile(data) : null;
+}
+
+// ── Activity feed (notifications bell) ──────────────────────────────────────
+
+export async function fetchMyActivity(userId: string, limit = 20): Promise<ActivityItem[]> {
+  const supabase = supabaseOrThrow();
+
+  // my recent chants first — self-referential embeds resolve to the wrong
+  // direction (children, not parent), so replies are found by parent_id
+  const { data: mine, error: mineError } = await supabase
+    .from('chants')
+    .select('id')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (mineError) throw mineError;
+  const myChantIds = (mine ?? []).map((row) => row.id);
+
+  // replies by others to my chants
+  const repliesQ =
+    myChantIds.length === 0
+      ? Promise.resolve({ data: [], error: null })
+      : supabase
+          .from('chants')
+          .select(
+            'id, body, match_id, created_at, match:matches(team1_short, team2_short), author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url)'
+          )
+          .in('parent_id', myChantIds)
+          .neq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(limit);
+
+  // roars by others on my chants
+  const roarsQ = supabase
+    .from('roars')
+    .select(
+      'created_at, user_id, actor:profiles!roars_user_id_fkey(username, display_name, favorite_team_id, avatar_url), chant:chants!inner(id, body, match_id, user_id, match:matches(team1_short, team2_short))'
+    )
+    .eq('chant.user_id', userId)
+    .neq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  const [replies, roars] = await Promise.all([repliesQ, roarsQ]);
+  if (replies.error) throw replies.error;
+  if (roars.error) throw roars.error;
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const items: ActivityItem[] = [
+    ...(replies.data ?? []).map((row: any) => ({
+      id: `reply-${row.id}`,
+      type: 'reply' as const,
+      actor: mapAuthor(row.author),
+      body: row.body,
+      matchId: row.match_id,
+      matchLabel: matchLabel(row.match_id, row.match),
+      createdAt: row.created_at,
+    })),
+    ...(roars.data ?? []).map((row: any) => ({
+      id: `roar-${row.chant.id}-${row.user_id}`,
+      type: 'roar' as const,
+      actor: mapAuthor(row.actor),
+      body: row.chant.body,
+      matchId: row.chant.match_id,
+      matchLabel: matchLabel(row.chant.match_id, row.chant.match),
+      createdAt: row.created_at,
+    })),
+  ];
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  return items.slice(0, limit);
 }
 
 // ── Fan profiles ────────────────────────────────────────────────────────────

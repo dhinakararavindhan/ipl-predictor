@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { LogOut, Pencil, ShieldCheck, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,25 @@ import { SignInDialog } from './SignInDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { UserAvatar } from './UserAvatar';
 
+const ONBOARDED_KEY = 'stands-onboarded';
+
 export function AuthButton() {
   const { configured, loading, user, profile, signOut } = useSocial();
   const [signInOpen, setSignInOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+
+  // Fresh accounts still carry the generated fan_xxxxxxxx username — walk
+  // them straight into picking a name and a favourite team, once.
+  useEffect(() => {
+    if (!profile || !/^fan_[0-9a-f]{8}$/.test(profile.username)) return;
+    if (localStorage.getItem(ONBOARDED_KEY)) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(ONBOARDED_KEY, '1');
+      setProfileOpen(true);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [profile]);
 
   if (!configured || loading) return null;
 

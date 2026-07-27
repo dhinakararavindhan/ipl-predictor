@@ -6,7 +6,12 @@ import { ChevronRight, MessagesSquare } from 'lucide-react';
 import { FIXTURES } from '@/lib/data/fixtures';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { fetchChantCounts } from '@/lib/social/api';
-import { fetchOtherSportMatches, MatchInfo, sportMeta } from '@/lib/social/matches';
+import {
+  fetchOtherSportMatches,
+  fetchTrendingMatches,
+  MatchInfo,
+  sportMeta,
+} from '@/lib/social/matches';
 import { TeamBadge } from '@/components/social/TeamBadge';
 import { SupabaseSetupNotice } from '@/components/social/SupabaseSetupNotice';
 
@@ -51,10 +56,12 @@ export default function SportsPage() {
   const configured = isSupabaseConfigured();
   const [matches, setMatches] = useState<MatchInfo[]>([]);
   const [chantCounts, setChantCounts] = useState<Record<string, number>>({});
+  const [trending, setTrending] = useState<Array<{ match: MatchInfo; chantCount: number }>>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
+    fetchTrendingMatches(3).then(setTrending).catch(() => {});
     fetchOtherSportMatches()
       .then((data) => {
         setMatches(data);
@@ -86,6 +93,33 @@ export default function SportsPage() {
         <h1 className="text-xl font-bold text-primary">All Sports</h1>
         <p className="text-sm text-muted">Pick a match, join its stands.</p>
       </div>
+
+      {/* Loudest stands right now */}
+      {trending.length > 0 && (
+        <div className="card rounded-2xl p-4 space-y-2">
+          <span className="text-sm font-semibold text-primary">🔥 Loudest stands right now</span>
+          {trending.map(({ match, chantCount }) => (
+            <Link
+              key={match.id}
+              href={`/match/${match.id}`}
+              className="flex items-center gap-2.5 rounded-xl p-2.5 transition-colors hover:bg-indigo-500/5"
+              style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}
+            >
+              <span className="text-sm">{sportMeta(match.sport).emoji}</span>
+              <TeamBadge team={match.team1} size="xs" />
+              <span className="text-xs font-bold text-primary">{match.team1.short}</span>
+              <span className="text-[10px] text-muted">vs</span>
+              <span className="text-xs font-bold text-primary">{match.team2.short}</span>
+              <TeamBadge team={match.team2} size="xs" />
+              <span className="flex-1 text-right text-[10px] text-faint truncate">{match.league}</span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <MessagesSquare className="w-2.5 h-2.5" />
+                {chantCount}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       {/* Cricket — the flagship, powered by the full IPL lab */}
       <div className="card rounded-2xl p-4 space-y-3">

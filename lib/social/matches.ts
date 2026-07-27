@@ -130,6 +130,28 @@ export async function fetchOtherSportMatches(): Promise<MatchInfo[]> {
   return (data ?? []).map(mapDbMatch);
 }
 
+// The most-chanted matches across every sport, with their chant counts.
+export async function fetchTrendingMatches(
+  limit = 3
+): Promise<Array<{ match: MatchInfo; chantCount: number }>> {
+  const supabase = getSupabase();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from('chants').select('match_id').limit(2000);
+  if (error || !data || data.length === 0) return [];
+  const counts = new Map<string, number>();
+  for (const row of data) counts.set(row.match_id, (counts.get(row.match_id) ?? 0) + 1);
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+  const { data: rows, error: matchError } = await supabase
+    .from('matches')
+    .select('*')
+    .in('id', top.map(([id]) => id));
+  if (matchError || !rows) return [];
+  const byId = new Map(rows.map((r) => [r.id, mapDbMatch(r)]));
+  return top
+    .filter(([id]) => byId.has(id))
+    .map(([id, chantCount]) => ({ match: byId.get(id)!, chantCount }));
+}
+
 // Results for grading Calls across every sport: matchId -> winnerId,
 // plus season ordering for streaks. Falls back to cricket fixtures when
 // Supabase is unreachable.

@@ -12,7 +12,9 @@ export function UserAvatar({
   author,
   size = 'sm',
 }: {
-  author: Pick<ChantAuthor, 'username' | 'displayName' | 'favoriteTeamId'>;
+  author: Pick<ChantAuthor, 'username' | 'displayName' | 'favoriteTeamId'> & {
+    avatarUrl?: string | null;
+  };
   size?: 'sm' | 'md';
 }) {
   const team = author.favoriteTeamId ? getTeamById(author.favoriteTeamId) : undefined;
@@ -23,6 +25,21 @@ export function UserAvatar({
     .slice(0, 2)
     .join('')
     .toUpperCase();
+
+  // OAuth fans bring their own photo (Google/Facebook profile picture)
+  if (author.avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={author.avatarUrl}
+        alt={name}
+        title={name}
+        className={`${sizeMap[size].split(' ').slice(0, 2).join(' ')} rounded-full object-cover shrink-0`}
+        style={{ border: `1.5px solid ${team ? `${team.color}40` : 'var(--border)'}` }}
+        referrerPolicy="no-referrer"
+      />
+    );
+  }
 
   return (
     <div

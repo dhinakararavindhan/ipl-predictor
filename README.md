@@ -79,6 +79,34 @@ Setup:
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
 
+### Sign-in options
+
+The sign-in dialog offers **Google**, **Apple**, **Facebook**, **email + password**, and **mobile (SMS OTP)**. Email works out of the box; the rest are switched on in the Supabase dashboard (the app shows a friendly message if a fan taps a provider that isn't enabled yet):
+
+1. **Google / Apple / Facebook** — Supabase → Authentication → Providers: paste the client ID/secret from each platform's developer console ([provider guides](https://supabase.com/docs/guides/auth/social-login)). Add your site URL (and the app's deep-link) to **Authentication → URL Configuration → Redirect URLs**.
+2. **Mobile OTP** — Authentication → Providers → Phone: connect an SMS provider (Twilio, MessageBird, Vonage…). Locally no SMS provider is needed — `supabase/config.toml` ships test numbers (`+919876543210`, `+14155551234`) that accept the code `123456`.
+3. OAuth fans arrive with their name and profile photo pre-filled (`0006_auth_providers.sql` teaches the signup trigger to read provider metadata); phone-only fans start as `Fan` and pick a name in onboarding.
+
+> Apple sign-in is required by App Store policy when any other social login is offered in the iOS app — that's why it's included.
+
+### Android & iOS apps
+
+The `android/` and `ios/` folders are native [Capacitor](https://capacitorjs.com) shells around the deployed web app — one codebase, app-store presence, with the mobile bottom tab bar giving it a native feel.
+
+```bash
+# 1. Deploy the web app (e.g. Vercel), then point the shells at it:
+STANDS_APP_URL=https://your-deployment.vercel.app npx cap sync
+
+# 2. Build & run
+npm run mobile:android   # opens Android Studio → Run ▶ / Build > Generate Signed App Bundle
+npm run mobile:ios       # opens Xcode (macOS) → Run ▶ / Product > Archive for the App Store
+```
+
+- App id `app.thestands.fan`, name **The Stands**, on both platforms.
+- Android needs Android Studio; iOS needs Xcode on macOS (`cd ios/App && pod install` first).
+- Store listing needs your own icons/splash screens — `npx @capacitor/assets generate` builds them all from one logo.
+- OAuth logins in the shells use the same hosted redirect flow as the web; add your deployment URL to Supabase's redirect allow-list.
+
 ### Admin & moderation
 
 Admins keep the feeds clean: they can remove any Chant, review fan reports, and ban/unban accounts. Fans see a flag button on every Chant to report it.

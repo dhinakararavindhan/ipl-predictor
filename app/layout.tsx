@@ -6,6 +6,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { SupabaseProvider } from '@/components/social/SupabaseProvider';
 import { AuthButton } from '@/components/social/AuthButton';
 import { NotificationsBell } from '@/components/social/NotificationsBell';
+import { MobileTabBar } from '@/components/MobileTabBar';
 import Link from 'next/link';
 import { Radio, Crown, Globe, Megaphone, Heart, BookOpen, MonitorPlay, FlaskConical } from 'lucide-react';
 
@@ -23,6 +24,7 @@ export const metadata: Metadata = {
 
 export const viewport = {
   themeColor: '#6366f1',
+  viewportFit: 'cover' as const, // draw under notches; safe-area insets handle the rest
 };
 
 export default function RootLayout({
@@ -141,13 +143,15 @@ export default function RootLayout({
             </div>
           </nav>
 
-          {/* Main Content */}
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Main Content (bottom padding clears the mobile tab bar) */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 sm:pb-6">
             {children}
           </main>
 
+          <MobileTabBar />
+
           {/* Footer */}
-          <footer className="border-t mt-16 py-8" style={{ borderColor: 'var(--border)' }}>
+          <footer className="border-t mt-16 py-8 pb-24 sm:pb-8" style={{ borderColor: 'var(--border)' }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-faint">
               <p>The Stands · The home crowd for every sport · Not affiliated with any league or team</p>
               <p className="mt-1">Cricket probabilities from 10,000 Monte Carlo simulations · Fan content moderated by the community</p>

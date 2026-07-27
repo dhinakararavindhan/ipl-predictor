@@ -9,7 +9,7 @@ const appUrl = process.env.STANDS_APP_URL || 'https://the-stands.vercel.app';
 const config: CapacitorConfig = {
   appId: 'app.thestands.fan',
   appName: 'The Stands',
-  webDir: 'public',
+  webDir: 'apps/web/public',
   server: {
     url: appUrl,
     cleartext: false,

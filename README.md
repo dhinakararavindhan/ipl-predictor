@@ -29,25 +29,51 @@
 - **Team Pages & Analytics** — Qualification paths, scenarios, strength ratings, probability charts
 - **Dark Mode** — Premium sports aesthetic, mobile-first
 
+## Architecture — multiple services, one repo
+
+```
+the-stands/
+├── apps/
+│   └── web/              # Next.js app — the product UI + serverless API routes
+├── services/
+│   └── fixtures-sync/    # standalone worker: fixtures, results, live flags
+├── packages/
+│   └── core/             # @thestands/core — logic shared by web + services
+├── supabase/             # the data platform: Postgres, Auth, Realtime, RLS
+├── android/  ios/        # native app shells (Capacitor)
+└── docker-compose.yml    # run web + fixtures-sync together
+```
+
+Each service deploys independently:
+
+| Service | Local dev | Production options |
+|---|---|---|
+| **web** | `npm run dev` | Vercel (set Root Directory to `apps/web`) or `apps/web/Dockerfile` |
+| **fixtures-sync** | `npm run sync:worker` (or `sync:once`) | its Dockerfile, any container host — or skip it and use the web app's cron route |
+| **data platform** | `npx supabase start` | Supabase cloud |
+| **mobile** | `npm run mobile:android` / `mobile:ios` | Play Store / App Store |
+
+`docker compose up` builds and runs web + fixtures-sync side by side (put env values in `.env`). New services (notifications, digests, feed aggregation…) follow the same pattern: a folder in `services/`, shared logic in `packages/core`.
+
 ## Tech Stack
 
-- **Next.js 16** (App Router, TypeScript)
+- **Next.js 16** (App Router, TypeScript) · npm workspaces monorepo
 - **Tailwind CSS v4**
 - **Zustand** (state management)
 - **Recharts** (data visualization)
 - **OpenAI API** (optional AI insights)
-- **Supabase** (optional persistence)
+- **Supabase** (Postgres, Auth, Realtime)
 
 ## Getting Started
 
 ```bash
-# Install dependencies
+# Install all workspaces
 npm install
 
-# Copy environment variables
-cp .env.example .env.local
+# Copy environment variables (the web app reads apps/web/.env.local)
+cp .env.example apps/web/.env.local
 
-# Start development server
+# Start the web app
 npm run dev
 ```
 
@@ -75,7 +101,7 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 Setup:
 
 1. Create a free project at [supabase.com](https://supabase.com/dashboard).
-2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0005`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, multi-sport matches, and the pulse/support/blogs/videos features.
+2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0006`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, multi-sport matches, the pulse/support/blogs/videos features, and multi-provider sign-in.
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
 
@@ -166,7 +192,7 @@ Notes:
 
 - Accounts are email + password via Supabase Auth; a profile (username, display name, favourite team) is auto-created on signup.
 - All writes are protected by Postgres row-level security — the anon key is safe to expose.
-- When fixtures change in `lib/data/fixtures.ts`, re-sync the `matches` table with `npx tsx scripts/generate-matches-sql.ts` and run the output in the SQL editor.
+- When fixtures change in `apps/web/lib/data/fixtures.ts`, re-sync the `matches` table with `npx tsx apps/web/scripts/generate-matches-sql.ts` and run the output in the SQL editor.
 - Realtime updates use Supabase Realtime (enabled by the migration); the UI falls back to 30s polling if unavailable.
 
 ## Deploy to Vercel
@@ -183,38 +209,6 @@ Or connect your GitHub repo to Vercel for automatic deployments.
 
 Add environment variables in the Vercel dashboard under Project Settings → Environment Variables.
 
-## Project Structure
-
-```
-the-stands/
-├── app/
-│   ├── page.tsx              # Home — Points table + insights
-│   ├── simulator/page.tsx    # Match simulator
-│   ├── analytics/page.tsx    # Charts + probability breakdown
-│   ├── team/[id]/page.tsx    # Team detail page
-│   └── api/
-│       ├── insights/route.ts # AI insights endpoint
-│       └── simulate/route.ts # Simulation endpoint
-├── components/
-│   ├── PointsTable.tsx
-│   ├── ProbabilityCard.tsx
-│   ├── FixtureCard.tsx
-│   ├── MatchSimulator.tsx
-│   ├── AIInsightsPanel.tsx
-│   ├── QualificationMeter.tsx
-│   ├── NRRChart.tsx
-│   ├── ProbabilityChart.tsx
-│   └── TeamLogo.tsx
-├── lib/
-│   ├── types.ts              # TypeScript interfaces
-│   ├── store.ts              # Zustand store
-│   ├── simulation.ts         # Monte Carlo engine
-│   ├── utils.ts              # Helpers
-│   └── data/
-│       ├── teams.ts          # IPL 2026 team data
-│       └── fixtures.ts       # Remaining fixtures
-```
-
 ## Simulation Engine
 
 The Monte Carlo engine:
@@ -226,6 +220,4 @@ The Monte Carlo engine:
 ## Adding Live Data
 
 The architecture is designed for easy live data integration:
-- Replace `lib/data/teams.ts` with a Supabase query
-- Replace `lib/data/fixtures.ts` with a live API fetch
-- Add a cron job or webhook to update standings after each match
+- The fixtures-sync service already does this for supported providers — add more in `packages/core/src/providers.ts`

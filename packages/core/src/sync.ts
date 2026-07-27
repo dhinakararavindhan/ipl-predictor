@@ -1,20 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAdminSupabase } from '@/lib/supabase/admin';
-import { clockLiveWindow, fetchFootballData } from '@/lib/sync/providers';
+// The fixture sync engine, shared by every runtime that needs it:
+// the web app's /api/sync-fixtures route (serverless cron) and the
+// standalone services/fixtures-sync worker (long-running process).
 
-// Fixture sync worker. Point a cron at this route (vercel.json ships a
-// 15-minute schedule) and matches stay current on their own:
-//  1. football-data.org fixtures upsert in (when FOOTBALL_DATA_TOKEN is set)
-//  2. the clock pass flips is_live from starts_at for every sport
-// Protected by CRON_SECRET (Vercel cron sends it as a Bearer token).
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { clockLiveWindow, fetchFootballData } from './providers';
 
-async function runSync() {
-  const supabase = getAdminSupabase();
-  if (!supabase) {
-    return { ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY not configured' };
-  }
+export interface SyncSummary {
+  ok: boolean;
+  error?: string;
+  upserted?: number;
+  wentLive?: number;
+  wentIdle?: number;
+  providerRan?: boolean;
+}
 
-  const summary = { upserted: 0, wentLive: 0, wentIdle: 0, providerRan: false };
+export async function runSync(supabase: SupabaseClient): Promise<SyncSummary> {
+  const summary: SyncSummary = { ok: true, upserted: 0, wentLive: 0, wentIdle: 0, providerRan: false };
 
   // 1. Provider pass — real fixtures and results
   const rows = await fetchFootballData().catch(() => []);
@@ -54,21 +55,5 @@ async function runSync() {
     summary.wentIdle = goIdle.length;
   }
 
-  return { ok: true, ...summary };
+  return summary;
 }
-
-function authorized(request: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return request.headers.get('authorization') === `Bearer ${secret}`;
-}
-
-export async function GET(request: NextRequest) {
-  if (!authorized(request)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  }
-  const result = await runSync();
-  return NextResponse.json(result, { status: result.ok ? 200 : 500 });
-}
-
-export const POST = GET;

@@ -85,6 +85,7 @@ grant select on public.posts to anon, authenticated;
 grant insert, update, delete on public.posts to authenticated;
 grant select on public.videos to anon, authenticated;
 grant insert, delete on public.videos to authenticated;
+grant all on public.pulse_calls, public.segment_results, public.supports, public.posts, public.videos to service_role;
 
 -- ── RLS ─────────────────────────────────────────────────────────────────────
 alter table public.pulse_calls enable row level security;

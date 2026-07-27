@@ -103,7 +103,7 @@ function mapDbMatch(row: any): MatchInfo {
     venue: row.venue ?? null,
     isCompleted: Boolean(row.is_completed),
     winnerId: row.winner_id ?? null,
-    isLive: false,
+    isLive: Boolean(row.is_live) && !row.is_completed,
   };
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

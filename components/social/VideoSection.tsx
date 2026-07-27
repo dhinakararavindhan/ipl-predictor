@@ -32,6 +32,9 @@ export function VideoCard({
             <img
               src={`https://i.ytimg.com/vi/${video.youtubeId}/hqdefault.jpg`}
               alt={video.title}
+              loading="lazy"
+              width={480}
+              height={270}
               className="w-full aspect-video object-cover"
             />
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">

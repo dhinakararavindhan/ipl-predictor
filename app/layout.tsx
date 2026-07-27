@@ -69,8 +69,8 @@ export default function RootLayout({
                   </div>
                 </Link>
 
-                {/* Nav Links */}
-                <div className="flex items-center gap-0.5 overflow-x-auto">
+                {/* Nav Links (phones navigate with the bottom tab bar) */}
+                <div className="hidden sm:flex items-center gap-0.5 overflow-x-auto">
                   <Link
                     href="/predict"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
@@ -131,7 +131,7 @@ export default function RootLayout({
 
                 {/* Right side: live badge + theme toggle */}
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">LIVE</span>
                   </div>

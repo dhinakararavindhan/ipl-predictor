@@ -135,6 +135,17 @@ The dashboard shows totals (fans, chants, roars, calls, reports), the reported-c
 
 Local development (no cloud project needed): with Docker running, `npx supabase start` boots a full local stack (`supabase/config.toml` is checked in; migrations apply automatically — use `npx supabase db reset` to reapply). Point `.env.local` at the printed `API_URL` and anon key.
 
+### Live fixture sync (matches update themselves)
+
+`/api/sync-fixtures` is a cron-driven worker (`vercel.json` schedules it every 15 minutes) that keeps the `matches` table current:
+
+1. **Provider pass** — with `FOOTBALL_DATA_TOKEN` set (free at [football-data.org](https://www.football-data.org)), real fixtures, live status, and final results for the competitions in `FOOTBALL_DATA_COMPETITIONS` (e.g. `PL,PD,CL`) upsert automatically — results grade everyone's Calls with no admin work.
+2. **Clock pass** — for every sport, `is_live` flips on at `starts_at` and off after a sport-typical duration, so the Live tab stays honest even without a data provider.
+
+Setup: set `SUPABASE_SERVICE_ROLE_KEY` (server-side only) and `CRON_SECRET` in your deployment env. Trigger manually with `curl -H "Authorization: Bearer $CRON_SECRET" https://your-app/api/sync-fixtures`. Add more providers in `lib/sync/providers.ts` — any source that maps to the `matches` row shape plugs in.
+
+When a match is live, its hub switches to **match-day mode**: the chant stream leads, refreshes every 10 seconds, and shows a live indicator.
+
 ### Adding a sport or match
 
 Any row in the `matches` table gets a hub automatically. In the SQL editor:

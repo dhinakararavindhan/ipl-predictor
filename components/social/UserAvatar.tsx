@@ -34,6 +34,7 @@ export function UserAvatar({
         src={author.avatarUrl}
         alt={name}
         title={name}
+        loading="lazy"
         className={`${sizeMap[size].split(' ').slice(0, 2).join(' ')} rounded-full object-cover shrink-0`}
         style={{ border: `1.5px solid ${team ? `${team.color}40` : 'var(--border)'}` }}
         referrerPolicy="no-referrer"

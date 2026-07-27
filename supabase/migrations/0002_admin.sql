@@ -37,6 +37,7 @@ create table public.reports (
 );
 
 grant select, insert, delete on public.reports to authenticated;
+grant all on public.reports to service_role;
 
 alter table public.reports enable row level security;
 create policy "admins read reports" on public.reports

@@ -67,6 +67,8 @@ grant select on public.roars to anon, authenticated;
 grant insert, delete on public.roars to authenticated;
 grant select on public.calls to anon, authenticated;
 grant insert, update on public.calls to authenticated;
+-- the sync worker and admin jobs use the service role (bypasses RLS)
+grant all on public.matches, public.profiles, public.chants, public.roars, public.calls to service_role;
 
 -- ── Row Level Security ──────────────────────────────────────────────────────
 -- Feeds are public to read; users may only write their own rows.

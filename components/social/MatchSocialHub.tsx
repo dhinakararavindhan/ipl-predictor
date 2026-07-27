@@ -33,6 +33,7 @@ export function MatchSocialHub({ match }: { match: MatchInfo }) {
   const { user } = useSocial();
   const userId = user?.id;
   const [chants, setChants] = useState<Chant[]>([]);
+  const [chantsLoaded, setChantsLoaded] = useState(false);
   const [split, setSplit] = useState<CallSplit>(EMPTY_SPLIT);
   const [myCallTeamId, setMyCallTeamId] = useState<string | null>(null);
   const [signInOpen, setSignInOpen] = useState(false);
@@ -42,7 +43,12 @@ export function MatchSocialHub({ match }: { match: MatchInfo }) {
 
   const refetchChants = useCallback(() => {
     if (!configured) return;
-    fetchChants(match.id, userId).then(setChants).catch(() => {});
+    fetchChants(match.id, userId)
+      .then((data) => {
+        setChants(data);
+        setChantsLoaded(true);
+      })
+      .catch(() => {});
   }, [configured, match.id, userId]);
 
   const refetchCalls = useCallback(() => {
@@ -60,7 +66,8 @@ export function MatchSocialHub({ match }: { match: MatchInfo }) {
     refetchCalls();
   }, [refetchChants, refetchCalls]);
 
-  // Fallback poll while the tab is visible (Realtime may be off or flaky)
+  // Fallback poll while the tab is visible (Realtime may be off or flaky);
+  // live matches poll faster so the stands feel like a chat
   useEffect(() => {
     if (!configured) return;
     const interval = setInterval(() => {
@@ -68,9 +75,9 @@ export function MatchSocialHub({ match }: { match: MatchInfo }) {
         refetchChants();
         refetchCalls();
       }
-    }, 30_000);
+    }, match.isLive ? 10_000 : 30_000);
     return () => clearInterval(interval);
-  }, [configured, refetchChants, refetchCalls]);
+  }, [configured, refetchChants, refetchCalls, match.isLive]);
 
   const realtimeHandlers = useMemo(
     () => ({ chants: refetchChants, calls: refetchCalls }),
@@ -182,46 +189,79 @@ export function MatchSocialHub({ match }: { match: MatchInfo }) {
         </div>
       </div>
 
-      {/* Support + Calls + Pulse */}
+      {/* Match-day ordering: live matches lead with the chant stream,
+          upcoming/decided matches lead with support and predictions */}
       {configured ? (
-        <>
-          <SupportMeter match={match} onNeedSignIn={() => setSignInOpen(true)} />
-          <CallWidget
-            match={match}
-            myCallTeamId={effectiveMyCall}
-            split={split}
-            onCallMade={onCallMade}
-            onCallFailed={refetchCalls}
-            onNeedSignIn={() => setSignInOpen(true)}
-          />
-          <PulsePredictor match={match} onNeedSignIn={() => setSignInOpen(true)} />
-          <VideoSection matchId={match.id} onNeedSignIn={() => setSignInOpen(true)} />
-        </>
+        (() => {
+          const chantsCard = (
+            <div key="chants" className="card rounded-2xl p-4 space-y-4">
+              <div className="flex items-center gap-2">
+                {match.isLive ? (
+                  <>
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-sm font-medium text-primary">Live chants</span>
+                  </>
+                ) : (
+                  <>
+                    <MessagesSquare className="w-4 h-4 text-indigo-500" />
+                    <span className="text-sm font-medium text-primary">Chants</span>
+                  </>
+                )}
+                {chants.length > 0 && <span className="text-xs text-muted">({chants.length})</span>}
+              </div>
+              <ChantComposer
+                matchId={match.id}
+                onPosted={refetchChants}
+                onNeedSignIn={() => setSignInOpen(true)}
+              />
+              {!chantsLoaded ? (
+                <div className="space-y-3" aria-hidden>
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="rounded-xl p-3 animate-pulse"
+                      style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-full" style={{ background: 'var(--border)' }} />
+                        <div className="flex-1 space-y-2 py-0.5">
+                          <div className="h-2.5 rounded w-24" style={{ background: 'var(--border)' }} />
+                          <div className="h-2.5 rounded w-3/4" style={{ background: 'var(--border)' }} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <ChantFeed
+                  chants={chants}
+                  onRoarToggled={onRoarToggled}
+                  onDeleted={onChantDeleted}
+                  onReplied={refetchChants}
+                  onNeedSignIn={() => setSignInOpen(true)}
+                />
+              )}
+            </div>
+          );
+          const playCards = (
+            <div key="play" className="space-y-6">
+              <SupportMeter match={match} onNeedSignIn={() => setSignInOpen(true)} />
+              <CallWidget
+                match={match}
+                myCallTeamId={effectiveMyCall}
+                split={split}
+                onCallMade={onCallMade}
+                onCallFailed={refetchCalls}
+                onNeedSignIn={() => setSignInOpen(true)}
+              />
+              <PulsePredictor match={match} onNeedSignIn={() => setSignInOpen(true)} />
+              <VideoSection matchId={match.id} onNeedSignIn={() => setSignInOpen(true)} />
+            </div>
+          );
+          return match.isLive ? [chantsCard, playCards] : [playCards, chantsCard];
+        })()
       ) : (
         <SupabaseSetupNotice feature="Calls and Chants" />
-      )}
-
-      {/* Chants */}
-      {configured && (
-        <div className="card rounded-2xl p-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <MessagesSquare className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-medium text-primary">Chants</span>
-            {chants.length > 0 && <span className="text-xs text-muted">({chants.length})</span>}
-          </div>
-          <ChantComposer
-            matchId={match.id}
-            onPosted={refetchChants}
-            onNeedSignIn={() => setSignInOpen(true)}
-          />
-          <ChantFeed
-            chants={chants}
-            onRoarToggled={onRoarToggled}
-            onDeleted={onChantDeleted}
-            onReplied={refetchChants}
-            onNeedSignIn={() => setSignInOpen(true)}
-          />
-        </div>
       )}
 
       <SignInDialog open={signInOpen} onOpenChange={setSignInOpen} />

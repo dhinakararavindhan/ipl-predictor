@@ -15,6 +15,7 @@ import { TeamLogo } from '@/components/TeamLogo';
 import { useSocial } from './SupabaseProvider';
 import { SupabaseSetupNotice } from './SupabaseSetupNotice';
 import { SignInDialog } from './SignInDialog';
+import { ShareButton } from './ShareButton';
 import { CallWidget } from './CallWidget';
 import { ChantComposer } from './ChantComposer';
 import { ChantFeed } from './ChantFeed';
@@ -80,12 +81,18 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
   const venueName = fixture.venue.split(',')[0];
 
   const onRoarToggled = (chantId: string, roared: boolean) => {
+    const patch = (c: Chant): Chant =>
+      c.id === chantId
+        ? { ...c, roaredByMe: roared, roarCount: Math.max(0, c.roarCount + (roared ? 1 : -1)) }
+        : { ...c, replies: c.replies.map(patch) };
+    setChants((prev) => prev.map(patch));
+  };
+
+  const onChantDeleted = (chantId: string) => {
     setChants((prev) =>
-      prev.map((c) =>
-        c.id === chantId
-          ? { ...c, roaredByMe: roared, roarCount: Math.max(0, c.roarCount + (roared ? 1 : -1)) }
-          : c
-      )
+      prev
+        .filter((c) => c.id !== chantId)
+        .map((c) => ({ ...c, replies: c.replies.filter((r) => r.id !== chantId) }))
     );
   };
 
@@ -103,13 +110,16 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <Link
-        href="/match"
-        className="inline-flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        All matches
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link
+          href="/match"
+          className="inline-flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          All matches
+        </Link>
+        <ShareButton title={`${team1?.shortName ?? ''} vs ${team2?.shortName ?? ''} — Match Hub`} />
+      </div>
 
       {/* Match header */}
       <div
@@ -191,7 +201,8 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
           <ChantFeed
             chants={chants}
             onRoarToggled={onRoarToggled}
-            onDeleted={(id) => setChants((prev) => prev.filter((c) => c.id !== id))}
+            onDeleted={onChantDeleted}
+            onReplied={refetchChants}
             onNeedSignIn={() => setSignInOpen(true)}
           />
         </div>

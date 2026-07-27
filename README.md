@@ -10,8 +10,10 @@ A production-quality IPL 2026 playoff qualification simulator with Monte Carlo s
 - **AI Insights** — Natural-language analysis of the playoff race (OpenAI or local fallback)
 - **Team Detail Pages** — Qualification paths, scenarios, strength ratings, finish distribution
 - **Analytics Dashboard** — Probability charts, NRR comparison, team strength breakdown
-- **Match Hubs (social)** — Every match has a shareable page where fans **Chant** (post), **Roar** (like), and make their **Call** (predict the winner), with a live community split
-- **Fan Leaderboard** — Fans ranked by correct Calls across the season (`/leaderboard`)
+- **Match Hubs (social)** — Every match has a shareable page where fans **Chant** (post, with threaded replies), **Roar** (like), and make their **Call** (predict the winner), with a live community split
+- **Fan Profiles** — Every fan has a public page (`/fan/<username>`) with their call record, streaks, badges, and recent chants
+- **Fan Leaderboard** — Fans ranked by correct Calls across the season (`/leaderboard`), with badges like 🔥 On fire and 🎯 Sharpshooter
+- **From the Stands** — Latest chants across all matches surface on the home page
 - **Admin Moderation** — Report flags on chants, an admin dashboard (`/admin`) to review reports, remove chants, and ban accounts
 - **Dark Mode** — Premium sports analytics aesthetic, mobile-first
 
@@ -61,7 +63,7 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 Setup:
 
 1. Create a free project at [supabase.com](https://supabase.com/dashboard).
-2. Open the SQL editor and run `supabase/migrations/0001_social.sql`, then `supabase/migrations/0002_admin.sql` (tables, row-level security, signup trigger, fixture seed, and moderation).
+2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001_social.sql`, `0002_admin.sql`, `0003_features.sql`) — tables, row-level security, signup trigger, fixture seed, moderation, and threaded replies.
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
 

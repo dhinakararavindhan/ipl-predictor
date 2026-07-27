@@ -41,12 +41,12 @@ export async function fetchChants(matchId: string, myUserId?: string): Promise<C
     .from('chants')
     // profiles must be FK-hinted: chants relates to profiles both directly
     // (user_id) and many-to-many through roars
-    .select('id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url), roars(user_id)')
+    .select('id, match_id, user_id, body, created_at, parent_id, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url), roars(user_id)')
     .eq('match_id', matchId)
     .order('created_at', { ascending: false })
-    .limit(100);
+    .limit(200);
   if (error) throw error;
-  return (data ?? []).map((row) => {
+  const flat: Chant[] = (data ?? []).map((row) => {
     const roars: { user_id: string }[] = row.roars ?? [];
     return {
       id: row.id,
@@ -54,20 +54,36 @@ export async function fetchChants(matchId: string, myUserId?: string): Promise<C
       userId: row.user_id,
       body: row.body,
       createdAt: row.created_at,
+      parentId: row.parent_id ?? null,
       author: mapAuthor(row.author),
       roarCount: roars.length,
       roaredByMe: myUserId ? roars.some((r) => r.user_id === myUserId) : false,
+      replies: [],
     };
   });
+  // nest one level: replies attach to their top-level parent, oldest first
+  const byId = new Map(flat.map((c) => [c.id, c]));
+  const topLevel: Chant[] = [];
+  for (const chant of flat) {
+    if (chant.parentId && byId.has(chant.parentId)) {
+      byId.get(chant.parentId)!.replies.unshift(chant);
+    } else if (!chant.parentId) {
+      topLevel.push(chant);
+    }
+  }
+  return topLevel;
 }
 
-export async function postChant(matchId: string, body: string): Promise<void> {
+export async function postChant(matchId: string, body: string, parentId?: string): Promise<void> {
   const supabase = supabaseOrThrow();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) throw new Error('Sign in to chant');
-  const { error } = await supabase
-    .from('chants')
-    .insert({ match_id: matchId, user_id: auth.user.id, body: body.trim() });
+  const { error } = await supabase.from('chants').insert({
+    match_id: matchId,
+    user_id: auth.user.id,
+    body: body.trim(),
+    ...(parentId && { parent_id: parentId }),
+  });
   if (error) throw error;
 }
 
@@ -187,6 +203,40 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
     .maybeSingle();
   if (error) throw error;
   return data ? mapProfile(data) : null;
+}
+
+// ── Fan profiles ────────────────────────────────────────────────────────────
+
+export async function fetchProfileByUsername(username: string): Promise<Profile | null> {
+  const supabase = supabaseOrThrow();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('username', username)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapProfile(data) : null;
+}
+
+export async function fetchUserChants(userId: string, limit = 20): Promise<AdminChant[]> {
+  const supabase = supabaseOrThrow();
+  const { data, error } = await supabase
+    .from('chants')
+    .select('id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned)')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    matchId: row.match_id,
+    userId: row.user_id,
+    body: row.body,
+    createdAt: row.created_at,
+    author: { ...mapAuthor(row.author), isBanned: row.author?.is_banned ?? false },
+  }));
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 }
 
 // ── Leaderboard ─────────────────────────────────────────────────────────────

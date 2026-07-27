@@ -20,9 +20,11 @@ export interface Chant {
   userId: string;
   body: string;
   createdAt: string;
+  parentId: string | null;
   author: ChantAuthor;
   roarCount: number;
   roaredByMe: boolean;
+  replies: Chant[]; // populated on top-level chants only
 }
 
 export interface Call {

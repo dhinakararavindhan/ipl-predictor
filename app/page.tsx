@@ -6,6 +6,7 @@ import { ProbabilityCard } from '@/components/ProbabilityCard';
 import { AIInsightsPanel } from '@/components/AIInsightsPanel';
 import { NRRChart } from '@/components/NRRChart';
 import { FixtureCard } from '@/components/FixtureCard';
+import { FanWall } from '@/components/social/FanWall';
 import { PlayoffSimulator } from '@/components/PlayoffProbabilitySimulator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableSkeleton, CardSkeleton, ChartSkeleton } from '@/components/LoadingSkeleton';
@@ -150,6 +151,9 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Latest chants across all matches */}
+      <FanWall />
     </div>
   );
 }

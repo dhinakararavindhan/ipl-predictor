@@ -1,46 +1,35 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Crown, Megaphone, Medal } from 'lucide-react';
-import { FIXTURES } from '@/lib/data/fixtures';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { fetchAllCalls, LeaderboardCallRow } from '@/lib/social/api';
+import { Badge, badgesFor, computeCallRecord, CallRecord } from '@/lib/social/badges';
 import { ChantAuthor } from '@/lib/social/types';
 import { useSocial } from '@/components/social/SupabaseProvider';
 import { SupabaseSetupNotice } from '@/components/social/SupabaseSetupNotice';
 import { UserAvatar } from '@/components/social/UserAvatar';
 
-interface LeaderboardEntry {
+interface LeaderboardEntry extends CallRecord {
   userId: string;
   author: ChantAuthor;
-  calls: number;
-  decided: number;
-  correct: number;
-  accuracy: number; // 0..100 over decided calls
+  badges: Badge[];
 }
 
 function rankEntries(rows: LeaderboardCallRow[]): LeaderboardEntry[] {
-  const results = new Map(
-    FIXTURES.filter((f) => f.isCompleted && f.winnerId).map((f) => [f.id, f.winnerId as string])
-  );
-  const byUser = new Map<string, LeaderboardEntry>();
+  const byUser = new Map<string, LeaderboardCallRow[]>();
   for (const row of rows) {
-    let entry = byUser.get(row.userId);
-    if (!entry) {
-      entry = { userId: row.userId, author: row.author, calls: 0, decided: 0, correct: 0, accuracy: 0 };
-      byUser.set(row.userId, entry);
-    }
-    entry.calls++;
-    const winner = results.get(row.matchId);
-    if (winner) {
-      entry.decided++;
-      if (winner === row.predictedTeamId) entry.correct++;
-    }
+    const list = byUser.get(row.userId) ?? [];
+    list.push(row);
+    byUser.set(row.userId, list);
   }
-  const entries = [...byUser.values()];
-  for (const e of entries) {
-    e.accuracy = e.decided > 0 ? (e.correct / e.decided) * 100 : 0;
-  }
+  const entries: LeaderboardEntry[] = [...byUser.entries()].map(([userId, userRows]) => {
+    const record = computeCallRecord(
+      userRows.map((r) => ({ matchId: r.matchId, predictedTeamId: r.predictedTeamId }))
+    );
+    return { userId, author: userRows[0].author, ...record, badges: badgesFor(record) };
+  });
   // most correct calls first, accuracy breaks ties, then volume
   entries.sort((a, b) => b.correct - a.correct || b.accuracy - a.accuracy || b.calls - a.calls);
   return entries.slice(0, 50);
@@ -110,9 +99,10 @@ export default function LeaderboardPage() {
             const isMe = user?.id === entry.userId;
             const name = entry.author.displayName || entry.author.username;
             return (
-              <div
+              <Link
                 key={entry.userId}
-                className="flex items-center gap-3 px-4 py-3"
+                href={`/fan/${entry.author.username}`}
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-indigo-500/5"
                 style={{
                   borderTop: i > 0 ? '1px solid var(--border)' : undefined,
                   background: isMe ? 'rgba(99,102,241,0.06)' : undefined,
@@ -130,10 +120,16 @@ export default function LeaderboardPage() {
                   <span className="text-sm font-semibold text-primary truncate block">
                     {name}
                     {isMe && <span className="text-xs text-indigo-500 font-normal"> — you</span>}
+                    {entry.badges.map((b) => (
+                      <span key={b.label} title={`${b.label}: ${b.title}`} className="ml-1">
+                        {b.emoji}
+                      </span>
+                    ))}
                   </span>
                   <span className="text-[10px] text-muted">
                     {entry.calls} {entry.calls === 1 ? 'call' : 'calls'}
                     {entry.decided > 0 && ` · ${entry.accuracy.toFixed(0)}% on decided`}
+                    {entry.currentStreak >= 2 && ` · ${entry.currentStreak} streak`}
                   </span>
                 </div>
                 <div className="text-right shrink-0">
@@ -142,7 +138,7 @@ export default function LeaderboardPage() {
                   </div>
                   <div className="text-[10px] text-muted">correct</div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

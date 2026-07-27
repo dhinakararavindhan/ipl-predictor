@@ -7,6 +7,7 @@ import { AIInsightsPanel } from '@/components/AIInsightsPanel';
 import { NRRChart } from '@/components/NRRChart';
 import { FixtureCard } from '@/components/FixtureCard';
 import { FanWall } from '@/components/social/FanWall';
+import { AroundTheGrounds } from '@/components/social/AroundTheGrounds';
 import { PlayoffSimulator } from '@/components/PlayoffProbabilitySimulator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TableSkeleton, CardSkeleton, ChartSkeleton } from '@/components/LoadingSkeleton';
@@ -35,10 +36,15 @@ export default function HomePage() {
     <div className="space-y-6">
       {/* Hero */}
       <div className="text-center py-4 sm:py-6">
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-2">
-          IPL 2026{' '}
-          <span className="gradient-text">Playoff Race</span>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-1">
+          Welcome to <span className="gradient-text">The Stands</span>
         </h1>
+        <p className="text-sm text-muted mb-3">
+          The home crowd for every sport — chant, roar, and call it before the umpire does.
+        </p>
+        <div className="text-base sm:text-lg font-semibold text-primary">
+          🏏 IPL 2026 Playoff Race
+        </div>
 
         <div className="flex items-center justify-center gap-2 mt-3">
           <button
@@ -151,6 +157,9 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Other sports with open hubs */}
+      <AroundTheGrounds />
 
       {/* Latest chants across all matches */}
       <FanWall />

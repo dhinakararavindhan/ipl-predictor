@@ -2,6 +2,7 @@
 // Postgres RLS is the trust boundary — these calls run in the browser.
 
 import { getSupabase } from '@/lib/supabase/client';
+import { matchLabel } from './matches';
 import { AdminChant, AdminStats, Call, CallSplit, Chant, ChantAuthor, Profile, Report } from './types';
 
 function supabaseOrThrow() {
@@ -222,7 +223,7 @@ export async function fetchUserChants(userId: string, limit = 20): Promise<Admin
   const supabase = supabaseOrThrow();
   const { data, error } = await supabase
     .from('chants')
-    .select('id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned)')
+    .select('id, match_id, user_id, body, created_at, match:matches(team1_short, team2_short), author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned)')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -231,6 +232,7 @@ export async function fetchUserChants(userId: string, limit = 20): Promise<Admin
   return (data ?? []).map((row: any) => ({
     id: row.id,
     matchId: row.match_id,
+    matchLabel: matchLabel(row.match_id, row.match),
     userId: row.user_id,
     body: row.body,
     createdAt: row.created_at,
@@ -280,7 +282,7 @@ export async function reportChant(chantId: string, reason?: string): Promise<voi
 }
 
 const REPORT_SELECT =
-  'id, chant_id, reason, created_at, reporter:profiles!reports_reporter_id_fkey(username, display_name, favorite_team_id, avatar_url), chant:chants(id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned))';
+  'id, chant_id, reason, created_at, reporter:profiles!reports_reporter_id_fkey(username, display_name, favorite_team_id, avatar_url), chant:chants(id, match_id, user_id, body, created_at, match:matches(team1_short, team2_short), author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned))';
 
 export async function fetchReports(): Promise<Report[]> {
   const supabase = supabaseOrThrow();
@@ -301,6 +303,7 @@ export async function fetchReports(): Promise<Report[]> {
       ? {
           id: row.chant.id,
           matchId: row.chant.match_id,
+          matchLabel: matchLabel(row.chant.match_id, row.chant.match),
           userId: row.chant.user_id,
           body: row.chant.body,
           createdAt: row.chant.created_at,
@@ -325,7 +328,7 @@ export async function fetchRecentChants(limit = 50): Promise<AdminChant[]> {
   const supabase = supabaseOrThrow();
   const { data, error } = await supabase
     .from('chants')
-    .select('id, match_id, user_id, body, created_at, author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned)')
+    .select('id, match_id, user_id, body, created_at, match:matches(team1_short, team2_short), author:profiles!chants_user_id_fkey(username, display_name, favorite_team_id, avatar_url, is_banned)')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -333,6 +336,7 @@ export async function fetchRecentChants(limit = 50): Promise<AdminChant[]> {
   return (data ?? []).map((row: any) => ({
     id: row.id,
     matchId: row.match_id,
+    matchLabel: matchLabel(row.match_id, row.match),
     userId: row.user_id,
     body: row.body,
     createdAt: row.created_at,

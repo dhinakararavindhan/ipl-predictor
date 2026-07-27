@@ -6,13 +6,16 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { SupabaseProvider } from '@/components/social/SupabaseProvider';
 import { AuthButton } from '@/components/social/AuthButton';
 import Link from 'next/link';
-import { Activity, BarChart3, Zap, Radio, Lightbulb, Target, Wrench, Trophy, Crown } from 'lucide-react';
+import { Activity, BarChart3, Zap, Radio, Lightbulb, Target, Wrench, Trophy, Crown, Globe } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'IPL Playoff Lab — Live Playoff Simulator',
+  title: {
+    default: 'The Stands — The home crowd for every sport',
+    template: '%s | The Stands',
+  },
   description:
-    'Real-time IPL 2026 playoff qualification simulator with Monte Carlo simulation and AI insights.',
-  keywords: ['IPL', 'cricket', 'playoffs', 'simulator', 'IPL 2026'],
+    'Every match has a home crowd. Chant, Roar, and make your Call on cricket, football, basketball and more — plus a full IPL playoff lab.',
+  keywords: ['sports', 'fans', 'cricket', 'IPL', 'football', 'predictions', 'community'],
 };
 
 export default function RootLayout({
@@ -49,16 +52,23 @@ export default function RootLayout({
                 {/* Brand */}
                 <Link href="/" className="flex items-center gap-2 group">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                    <span className="text-white font-bold text-sm">🏏</span>
+                    <span className="text-white font-bold text-sm">🏟️</span>
                   </div>
                   <div>
-                    <span className="font-bold text-primary text-sm">IPL Playoff Lab</span>
-                    <span className="hidden sm:inline text-xs text-muted ml-1">2026</span>
+                    <span className="font-bold text-primary text-sm">The Stands</span>
+                    <span className="hidden sm:inline text-xs text-muted ml-1">every fan&apos;s home</span>
                   </div>
                 </Link>
 
                 {/* Nav Links */}
                 <div className="flex items-center gap-0.5 overflow-x-auto">
+                  <Link
+                    href="/sports"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Sports</span>
+                  </Link>
                   <Link
                     href="/match"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
@@ -152,8 +162,8 @@ export default function RootLayout({
           {/* Footer */}
           <footer className="border-t mt-16 py-8" style={{ borderColor: 'var(--border)' }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-faint">
-              <p>IPL Playoff Lab · Simulation-based predictions · Not affiliated with BCCI or IPL</p>
-              <p className="mt-1">Probabilities based on 10,000 Monte Carlo simulations · Data from ESPNCricinfo</p>
+              <p>The Stands · The home crowd for every sport · Not affiliated with any league or team</p>
+              <p className="mt-1">Cricket probabilities from 10,000 Monte Carlo simulations · Fan content moderated by the community</p>
             </div>
           </footer>
         </SupabaseProvider>

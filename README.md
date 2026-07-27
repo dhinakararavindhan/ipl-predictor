@@ -1,21 +1,24 @@
-# 🏏 IPL Playoff Lab
+# 🏟️ The Stands
 
-A production-quality IPL 2026 playoff qualification simulator with Monte Carlo simulation and AI-powered insights.
+**The home crowd for every sport.** Every match — cricket, football, basketball, anything — gets a hub where fans **Chant** (post, with threaded replies), **Roar** (like), and make their **Call** (predict the winner). Cricket is the flagship: a full IPL 2026 playoff lab with Monte Carlo simulation and AI insights.
 
 ## Features
 
-- **Live Points Table** — Real-time standings with NRR, form, and qualification probability
+### Social — any sport
+- **Match Hubs** — Every match has a shareable page (`/match/<id>`) with Chants, Roars, Calls, and a live crowd split. Add a row to the `matches` table for *any* sport and it gets a hub automatically
+- **Sports Directory** — `/sports` lists every league and match with an open hub
+- **Fan Profiles** — Every fan has a public page (`/fan/<username>`) with their call record, streaks, badges, and recent chants
+- **Fan Leaderboard** — Fans ranked by correct Calls across all sports (`/leaderboard`), with badges like 🔥 On fire and 🎯 Sharpshooter
+- **From the Stands** — Latest chants across all matches surface on the home page
+- **Admin Moderation** — Report flags on chants, an admin dashboard (`/admin`) to review reports, remove chants, and ban accounts
+
+### Cricket — the flagship lab
+- **Live Points Table** — Real-time IPL standings with NRR, form, and qualification probability
 - **Monte Carlo Simulation** — 10,000 simulations to compute Top 4/Top 2/Elimination probabilities
 - **Match Simulator** — Toggle match results and instantly see how the playoff picture changes
 - **AI Insights** — Natural-language analysis of the playoff race (OpenAI or local fallback)
-- **Team Detail Pages** — Qualification paths, scenarios, strength ratings, finish distribution
-- **Analytics Dashboard** — Probability charts, NRR comparison, team strength breakdown
-- **Match Hubs (social)** — Every match has a shareable page where fans **Chant** (post, with threaded replies), **Roar** (like), and make their **Call** (predict the winner), with a live community split
-- **Fan Profiles** — Every fan has a public page (`/fan/<username>`) with their call record, streaks, badges, and recent chants
-- **Fan Leaderboard** — Fans ranked by correct Calls across the season (`/leaderboard`), with badges like 🔥 On fire and 🎯 Sharpshooter
-- **From the Stands** — Latest chants across all matches surface on the home page
-- **Admin Moderation** — Report flags on chants, an admin dashboard (`/admin`) to review reports, remove chants, and ban accounts
-- **Dark Mode** — Premium sports analytics aesthetic, mobile-first
+- **Team Pages & Analytics** — Qualification paths, scenarios, strength ratings, probability charts
+- **Dark Mode** — Premium sports aesthetic, mobile-first
 
 ## Tech Stack
 
@@ -63,7 +66,7 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 Setup:
 
 1. Create a free project at [supabase.com](https://supabase.com/dashboard).
-2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001_social.sql`, `0002_admin.sql`, `0003_features.sql`) — tables, row-level security, signup trigger, fixture seed, moderation, and threaded replies.
+2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0004`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, and multi-sport matches.
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
 
@@ -84,6 +87,22 @@ Admins keep the feeds clean: they can remove any Chant, review fan reports, and 
 The dashboard shows totals (fans, chants, roars, calls, reports), the reported-chants queue (delete the chant, ban the author, or dismiss the report), and the latest chants across all matches. All admin powers are enforced by row-level security, and privilege flags (`is_admin`, `is_banned`) are trigger-guarded so users cannot change them through the API. Banned fans keep read access but cannot post, roar, call, or report.
 
 Local development (no cloud project needed): with Docker running, `npx supabase start` boots a full local stack (`supabase/config.toml` is checked in; migrations apply automatically — use `npx supabase db reset` to reapply). Point `.env.local` at the printed `API_URL` and anon key.
+
+### Adding a sport or match
+
+Any row in the `matches` table gets a hub automatically. In the SQL editor:
+
+```sql
+insert into public.matches
+  (id, sport, league, team1_id, team2_id, team1_name, team2_name,
+   team1_short, team2_short, team1_color, team2_color, venue, starts_at, is_completed)
+values
+  ('fb9', 'football', 'Premier League', 'liv', 'eve',
+   'Liverpool', 'Everton', 'LIV', 'EVE', '#C8102E', '#003399',
+   'Anfield', '2026-09-20T15:00:00Z', false);
+```
+
+It appears on `/sports` and gets a hub at `/match/fb9` instantly. When the match is decided, set `is_completed = true` and `winner_id` to the winning team id — Calls lock and the leaderboard grades them. `0004_multisport.sql` ships sample football, basketball, and kabaddi matches to start from.
 
 Notes:
 
@@ -109,7 +128,7 @@ Add environment variables in the Vercel dashboard under Project Settings → Env
 ## Project Structure
 
 ```
-ipl-playoff-lab/
+the-stands/
 ├── app/
 │   ├── page.tsx              # Home — Points table + insights
 │   ├── simulator/page.tsx    # Match simulator

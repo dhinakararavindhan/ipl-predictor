@@ -1,4 +1,3 @@
-import { FIXTURES } from '@/lib/data/fixtures';
 import { Call } from './types';
 
 export interface Badge {
@@ -16,23 +15,27 @@ export interface CallRecord {
   currentStreak: number;
 }
 
-const fixtureOrder = new Map(FIXTURES.map((f, i) => [f.id, i]));
-const results = new Map(
-  FIXTURES.filter((f) => f.isCompleted && f.winnerId).map((f) => [f.id, f.winnerId as string])
-);
+export interface MatchResults {
+  winners: Map<string, string>; // matchId -> winning team id
+  order: Map<string, number>; // matchId -> season position
+}
 
-// Score a fan's calls against the static fixture results, in match order so
-// streaks mean consecutive decided matches called correctly.
-export function computeCallRecord(calls: Pick<Call, 'matchId' | 'predictedTeamId'>[]): CallRecord {
+// Score a fan's calls against decided results (any sport — see
+// fetchMatchResults), in season order so streaks mean consecutive
+// decided matches called correctly.
+export function computeCallRecord(
+  calls: Pick<Call, 'matchId' | 'predictedTeamId'>[],
+  { winners, order }: MatchResults
+): CallRecord {
   const ordered = [...calls].sort(
-    (a, b) => (fixtureOrder.get(a.matchId) ?? 0) - (fixtureOrder.get(b.matchId) ?? 0)
+    (a, b) => (order.get(a.matchId) ?? 0) - (order.get(b.matchId) ?? 0)
   );
   let decided = 0;
   let correct = 0;
   let bestStreak = 0;
   let currentStreak = 0;
   for (const call of ordered) {
-    const winner = results.get(call.matchId);
+    const winner = winners.get(call.matchId);
     if (!winner) continue;
     decided++;
     if (winner === call.predictedTeamId) {

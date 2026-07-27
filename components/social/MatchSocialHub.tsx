@@ -3,26 +3,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, MessagesSquare } from 'lucide-react';
-import { Fixture } from '@/lib/types';
-import { getTeamById } from '@/lib/data/teams';
-import { formatDate } from '@/lib/utils';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { fetchCallSplit, fetchChants, fetchMyCall } from '@/lib/social/api';
 import { Chant, CallSplit } from '@/lib/social/types';
-import { isMatchLive } from '@/lib/social/match';
+import { MatchInfo, sportMeta } from '@/lib/social/matches';
 import { useRealtimeMatch } from '@/lib/social/useRealtimeMatch';
-import { TeamLogo } from '@/components/TeamLogo';
 import { useSocial } from './SupabaseProvider';
 import { SupabaseSetupNotice } from './SupabaseSetupNotice';
 import { SignInDialog } from './SignInDialog';
 import { ShareButton } from './ShareButton';
+import { TeamBadge } from './TeamBadge';
 import { CallWidget } from './CallWidget';
 import { ChantComposer } from './ChantComposer';
 import { ChantFeed } from './ChantFeed';
 
 const EMPTY_SPLIT: CallSplit = { total: 0, byTeam: {} };
 
-export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
+function formatMatchDate(iso: string): string {
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' });
+}
+
+export function MatchSocialHub({ match }: { match: MatchInfo }) {
   const configured = isSupabaseConfigured();
   const { user } = useSocial();
   const userId = user?.id;
@@ -31,23 +34,23 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
   const [myCallTeamId, setMyCallTeamId] = useState<string | null>(null);
   const [signInOpen, setSignInOpen] = useState(false);
 
-  const team1 = getTeamById(fixture.team1Id);
-  const team2 = getTeamById(fixture.team2Id);
+  const { team1, team2 } = match;
+  const sport = sportMeta(match.sport);
 
   const refetchChants = useCallback(() => {
     if (!configured) return;
-    fetchChants(fixture.id, userId).then(setChants).catch(() => {});
-  }, [configured, fixture.id, userId]);
+    fetchChants(match.id, userId).then(setChants).catch(() => {});
+  }, [configured, match.id, userId]);
 
   const refetchCalls = useCallback(() => {
     if (!configured) return;
-    fetchCallSplit(fixture.id).then(setSplit).catch(() => {});
+    fetchCallSplit(match.id).then(setSplit).catch(() => {});
     if (userId) {
-      fetchMyCall(fixture.id, userId)
+      fetchMyCall(match.id, userId)
         .then((call) => setMyCallTeamId(call?.predictedTeamId ?? null))
         .catch(() => {});
     }
-  }, [configured, fixture.id, userId]);
+  }, [configured, match.id, userId]);
 
   useEffect(() => {
     refetchChants();
@@ -70,15 +73,16 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
     () => ({ chants: refetchChants, calls: refetchCalls }),
     [refetchChants, refetchCalls]
   );
-  useRealtimeMatch(fixture.id, realtimeHandlers);
-
-  if (!team1 || !team2) return null;
+  useRealtimeMatch(match.id, realtimeHandlers);
 
   // signed-out users have no call of their own, whatever state we last held
   const effectiveMyCall = user ? myCallTeamId : null;
-  const winner = fixture.winnerId ? getTeamById(fixture.winnerId) : undefined;
-  const live = isMatchLive(fixture);
-  const venueName = fixture.venue.split(',')[0];
+  const winner = match.winnerId
+    ? match.winnerId === team1.id
+      ? team1
+      : team2
+    : null;
+  const venueName = match.venue ? match.venue.split(',')[0] : null;
 
   const onRoarToggled = (chantId: string, roared: boolean) => {
     const patch = (c: Chant): Chant =>
@@ -112,13 +116,13 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
         <Link
-          href="/match"
+          href={match.sport === 'cricket' ? '/match' : `/sports`}
           className="inline-flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          All matches
+          {match.sport === 'cricket' ? 'All matches' : 'All sports'}
         </Link>
-        <ShareButton title={`${team1?.shortName ?? ''} vs ${team2?.shortName ?? ''} — Match Hub`} />
+        <ShareButton title={`${team1.short} vs ${team2.short} — The Stands`} />
       </div>
 
       {/* Match header */}
@@ -129,52 +133,56 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
           border: '1px solid var(--border-card)',
         }}
       >
+        <div className="flex items-center justify-center gap-2 mb-4 text-xs text-muted">
+          <span>{sport.emoji}</span>
+          <span className="font-medium">{match.league}</span>
+        </div>
         <div className="flex items-center justify-center gap-6 sm:gap-10">
           <div className="flex flex-col items-center gap-2">
-            <TeamLogo team={team1} size="lg" />
-            <span className="font-bold text-primary">{team1.shortName}</span>
-            {fixture.score_1 && <span className="text-xs text-muted">{fixture.score_1}</span>}
+            <TeamBadge team={team1} size="lg" />
+            <span className="font-bold text-primary">{team1.short}</span>
+            {match.score1 && <span className="text-xs text-muted">{match.score1}</span>}
           </div>
           <div className="flex flex-col items-center gap-1">
             <span className="text-lg font-bold text-muted">VS</span>
-            {fixture.isCompleted ? (
+            {match.isCompleted ? (
               winner ? (
                 <span
                   className="text-xs font-semibold px-2 py-0.5 rounded-full"
                   style={{ background: `${winner.color}18`, color: winner.color, border: `1px solid ${winner.color}40` }}
                 >
-                  {winner.shortName} won
+                  {winner.short} won
                 </span>
               ) : (
                 <span className="text-xs text-muted">No result</span>
               )
-            ) : live ? (
+            ) : match.isLive ? (
               <span className="text-xs font-semibold text-red-500 animate-pulse">In play</span>
             ) : (
               <span className="text-xs text-muted">Upcoming</span>
             )}
           </div>
           <div className="flex flex-col items-center gap-2">
-            <TeamLogo team={team2} size="lg" />
-            <span className="font-bold text-primary">{team2.shortName}</span>
-            {fixture.score_2 && <span className="text-xs text-muted">{fixture.score_2}</span>}
+            <TeamBadge team={team2} size="lg" />
+            <span className="font-bold text-primary">{team2.short}</span>
+            {match.score2 && <span className="text-xs text-muted">{match.score2}</span>}
           </div>
         </div>
         <div className="flex items-center justify-center gap-3 mt-4 text-xs text-muted">
-          <span>{formatDate(fixture.date)}</span>
-          <span className="inline-flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            {venueName}
-          </span>
+          <span>{formatMatchDate(match.date)}</span>
+          {venueName && (
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
+              {venueName}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Calls */}
       {configured ? (
         <CallWidget
-          fixture={fixture}
-          team1={team1}
-          team2={team2}
+          match={match}
           myCallTeamId={effectiveMyCall}
           split={split}
           onCallMade={onCallMade}
@@ -194,7 +202,7 @@ export function MatchSocialHub({ fixture }: { fixture: Fixture }) {
             {chants.length > 0 && <span className="text-xs text-muted">({chants.length})</span>}
           </div>
           <ChantComposer
-            matchId={fixture.id}
+            matchId={match.id}
             onPosted={refetchChants}
             onNeedSignIn={() => setSignInOpen(true)}
           />

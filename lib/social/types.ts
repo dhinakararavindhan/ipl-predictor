@@ -50,6 +50,7 @@ export interface Report {
   chant: {
     id: string;
     matchId: string;
+    matchLabel: string;
     userId: string;
     body: string;
     createdAt: string;
@@ -60,6 +61,7 @@ export interface Report {
 export interface AdminChant {
   id: string;
   matchId: string;
+  matchLabel: string; // "KKR vs GT" — resolved for any sport
   userId: string;
   body: string;
   createdAt: string;

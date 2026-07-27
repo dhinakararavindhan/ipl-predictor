@@ -2,17 +2,14 @@
 
 import { useState } from 'react';
 import { Check, Lock, Megaphone, X } from 'lucide-react';
-import { Fixture, Team } from '@/lib/types';
 import { CallSplit } from '@/lib/social/types';
-import { isMatchLocked } from '@/lib/social/match';
+import { MatchInfo, MatchTeam } from '@/lib/social/matches';
 import { upsertCall } from '@/lib/social/api';
-import { TeamLogo } from '@/components/TeamLogo';
+import { TeamBadge } from './TeamBadge';
 import { useSocial } from './SupabaseProvider';
 
 interface CallWidgetProps {
-  fixture: Fixture;
-  team1: Team;
-  team2: Team;
+  match: MatchInfo;
   myCallTeamId: string | null;
   split: CallSplit;
   onCallMade: (teamId: string) => void;
@@ -21,9 +18,7 @@ interface CallWidgetProps {
 }
 
 export function CallWidget({
-  fixture,
-  team1,
-  team2,
+  match,
   myCallTeamId,
   split,
   onCallMade,
@@ -34,9 +29,12 @@ export function CallWidget({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const locked = isMatchLocked(fixture);
-  const decided = fixture.isCompleted && fixture.winnerId;
-  const myCallCorrect = decided && myCallTeamId ? fixture.winnerId === myCallTeamId : null;
+  const { team1, team2 } = match;
+  // Calls lock once the result is recorded
+  const locked = match.isCompleted;
+  const decided = match.isCompleted && match.winnerId;
+  const myCallCorrect = decided && myCallTeamId ? match.winnerId === myCallTeamId : null;
+  const winnerShort = match.winnerId === team1.id ? team1.short : team2.short;
 
   const t1Count = split.byTeam[team1.id] ?? 0;
   const t2Count = split.byTeam[team2.id] ?? 0;
@@ -54,7 +52,7 @@ export function CallWidget({
     setError(null);
     onCallMade(teamId); // optimistic
     try {
-      await upsertCall(fixture.id, teamId);
+      await upsertCall(match.id, teamId);
     } catch (err) {
       onCallFailed(); // refetch true state — a local revert can't undo the split
       const msg = err instanceof Error ? err.message : '';
@@ -68,7 +66,7 @@ export function CallWidget({
     }
   };
 
-  const pickButton = (team: Team) => {
+  const pickButton = (team: MatchTeam) => {
     const picked = myCallTeamId === team.id;
     return (
       <button
@@ -81,9 +79,9 @@ export function CallWidget({
           opacity: locked && !picked ? 0.5 : 1,
         }}
       >
-        <TeamLogo team={team} size="sm" />
+        <TeamBadge team={team} size="sm" />
         <span className="text-xs font-bold" style={{ color: team.color }}>
-          {team.shortName}
+          {team.short}
         </span>
         {picked && (
           <span className="text-[10px] font-semibold text-primary inline-flex items-center gap-1">
@@ -131,7 +129,7 @@ export function CallWidget({
             <>
               <X className="w-3.5 h-3.5 text-red-500" />
               <span className="text-red-600 dark:text-red-400">
-                Wrong call — {fixture.winnerId?.toUpperCase()} won
+                Wrong call — {winnerShort} won
               </span>
             </>
           )}
@@ -159,8 +157,8 @@ export function CallWidget({
         </div>
         {splitTotal > 0 && (
           <div className="flex justify-between text-xs font-medium">
-            <span style={{ color: team1.color }}>{team1.shortName} {t1Pct}%</span>
-            <span style={{ color: team2.color }}>{t2Pct}% {team2.shortName}</span>
+            <span style={{ color: team1.color }}>{team1.short} {t1Pct}%</span>
+            <span style={{ color: team2.color }}>{t2Pct}% {team2.short}</span>
           </div>
         )}
       </div>

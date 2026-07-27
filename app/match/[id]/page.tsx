@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import { FIXTURES } from '@/lib/data/fixtures';
 import { getTeamById } from '@/lib/data/teams';
 import { formatDate } from '@/lib/utils';
+import { cricketMatchInfo } from '@/lib/social/matches';
 import { MatchSocialHub } from '@/components/social/MatchSocialHub';
+import { DbMatchHub } from '@/components/social/DbMatchHub';
 
 function getFixture(id: string) {
   return FIXTURES.find((f) => f.id === id);
@@ -16,7 +17,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const fixture = getFixture(id);
-  if (!fixture) return { title: 'Match not found' };
+  // non-cricket matches resolve client-side; give them a generic share title
+  if (!fixture) {
+    return {
+      title: 'Match Hub | The Stands',
+      description: 'Chants, Roars and Calls — join the crowd on The Stands.',
+    };
+  }
   const team1 = getTeamById(fixture.team1Id);
   const team2 = getTeamById(fixture.team2Id);
   const title = `${team1?.shortName} vs ${team2?.shortName} · ${formatDate(fixture.date)} — Match Hub`;
@@ -36,7 +43,11 @@ export default async function MatchHubPage({
 }) {
   const { id } = await params;
   const fixture = getFixture(id);
-  if (!fixture) notFound();
 
-  return <MatchSocialHub fixture={fixture} />;
+  // Cricket fixtures resolve instantly from app data; anything else is
+  // looked up in the matches table — any sport seeded there gets a hub.
+  if (fixture) {
+    return <MatchSocialHub match={cricketMatchInfo(fixture)} />;
+  }
+  return <DbMatchHub matchId={id} />;
 }

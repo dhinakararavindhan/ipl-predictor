@@ -3,23 +3,15 @@
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Megaphone, MessagesSquare, Target } from 'lucide-react';
-import { FIXTURES } from '@/lib/data/fixtures';
 import { getTeamById } from '@/lib/data/teams';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { fetchMyCalls, fetchProfileByUsername, fetchUserChants } from '@/lib/social/api';
 import { badgesFor, computeCallRecord, CallRecord } from '@/lib/social/badges';
+import { fetchMatchResults } from '@/lib/social/matches';
 import { AdminChant, Profile } from '@/lib/social/types';
 import { SupabaseSetupNotice } from '@/components/social/SupabaseSetupNotice';
 import { ShareButton } from '@/components/social/ShareButton';
 import { UserAvatar } from '@/components/social/UserAvatar';
-
-function matchLabel(matchId: string): string {
-  const fixture = FIXTURES.find((f) => f.id === matchId);
-  if (!fixture) return matchId;
-  const t1 = getTeamById(fixture.team1Id)?.shortName ?? fixture.team1Id;
-  const t2 = getTeamById(fixture.team2Id)?.shortName ?? fixture.team2Id;
-  return `${t1} vs ${t2}`;
-}
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
@@ -51,13 +43,14 @@ export default function FanPage({ params }: { params: Promise<{ username: string
           setState('missing');
           return;
         }
-        const [calls, userChants] = await Promise.all([
+        const [calls, userChants, results] = await Promise.all([
           fetchMyCalls(p.id),
           fetchUserChants(p.id),
+          fetchMatchResults(),
         ]);
         if (cancelled) return;
         setProfile(p);
-        setRecord(computeCallRecord(calls));
+        setRecord(computeCallRecord(calls, results));
         setChants(userChants);
         setState('ready');
       })
@@ -108,7 +101,7 @@ export default function FanPage({ params }: { params: Promise<{ username: string
           <ArrowLeft className="w-4 h-4" />
           Leaderboard
         </Link>
-        <ShareButton title={`${name} — IPL Playoff Lab fan`} />
+        <ShareButton title={`${name} — The Stands fan`} />
       </div>
 
       {/* Fan hero */}
@@ -196,7 +189,7 @@ export default function FanPage({ params }: { params: Promise<{ username: string
                   href={`/match/${chant.matchId}`}
                   className="text-[10px] text-muted hover:text-indigo-500 inline-flex items-center gap-0.5 mb-1"
                 >
-                  {matchLabel(chant.matchId)}
+                  {chant.matchLabel}
                   <ExternalLink className="w-2.5 h-2.5" />
                 </Link>
                 <p className="text-sm text-primary whitespace-pre-wrap break-words">{chant.body}</p>

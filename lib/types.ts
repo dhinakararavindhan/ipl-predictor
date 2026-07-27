@@ -1,4 +1,4 @@
-// Core types for IPL Playoff Lab
+// Core types for the cricket (IPL) section of The Stands
 
 export interface Team {
   id: string;

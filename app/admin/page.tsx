@@ -15,8 +15,6 @@ import {
   Users,
   Volume2,
 } from 'lucide-react';
-import { FIXTURES } from '@/lib/data/fixtures';
-import { getTeamById } from '@/lib/data/teams';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import {
   deleteChant,
@@ -31,14 +29,6 @@ import { useSocial } from '@/components/social/SupabaseProvider';
 import { SupabaseSetupNotice } from '@/components/social/SupabaseSetupNotice';
 import { UserAvatar } from '@/components/social/UserAvatar';
 import { Button } from '@/components/ui/button';
-
-function matchLabel(matchId: string): string {
-  const fixture = FIXTURES.find((f) => f.id === matchId);
-  if (!fixture) return matchId;
-  const t1 = getTeamById(fixture.team1Id)?.shortName ?? fixture.team1Id;
-  const t2 = getTeamById(fixture.team2Id)?.shortName ?? fixture.team2Id;
-  return `${t1} vs ${t2}`;
-}
 
 function StatTile({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
@@ -62,6 +52,7 @@ function ChantRow({
   chant: {
     id: string;
     matchId: string;
+    matchLabel: string;
     userId: string;
     body: string;
     author: AdminChant['author'];
@@ -90,7 +81,7 @@ function ChantRow({
               href={`/match/${chant.matchId}`}
               className="text-[10px] text-muted hover:text-indigo-500 inline-flex items-center gap-0.5"
             >
-              {matchLabel(chant.matchId)}
+              {chant.matchLabel}
               <ExternalLink className="w-2.5 h-2.5" />
             </Link>
           </div>

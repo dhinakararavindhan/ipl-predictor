@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Crown, Megaphone, Medal } from 'lucide-react';
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 import { fetchAllCalls, LeaderboardCallRow } from '@/lib/social/api';
-import { Badge, badgesFor, computeCallRecord, CallRecord } from '@/lib/social/badges';
+import { Badge, badgesFor, computeCallRecord, CallRecord, MatchResults } from '@/lib/social/badges';
+import { fetchMatchResults } from '@/lib/social/matches';
 import { ChantAuthor } from '@/lib/social/types';
 import { useSocial } from '@/components/social/SupabaseProvider';
 import { SupabaseSetupNotice } from '@/components/social/SupabaseSetupNotice';
@@ -17,7 +18,7 @@ interface LeaderboardEntry extends CallRecord {
   badges: Badge[];
 }
 
-function rankEntries(rows: LeaderboardCallRow[]): LeaderboardEntry[] {
+function rankEntries(rows: LeaderboardCallRow[], results: MatchResults): LeaderboardEntry[] {
   const byUser = new Map<string, LeaderboardCallRow[]>();
   for (const row of rows) {
     const list = byUser.get(row.userId) ?? [];
@@ -26,7 +27,8 @@ function rankEntries(rows: LeaderboardCallRow[]): LeaderboardEntry[] {
   }
   const entries: LeaderboardEntry[] = [...byUser.entries()].map(([userId, userRows]) => {
     const record = computeCallRecord(
-      userRows.map((r) => ({ matchId: r.matchId, predictedTeamId: r.predictedTeamId }))
+      userRows.map((r) => ({ matchId: r.matchId, predictedTeamId: r.predictedTeamId })),
+      results
     );
     return { userId, author: userRows[0].author, ...record, badges: badgesFor(record) };
   });
@@ -41,14 +43,16 @@ export default function LeaderboardPage() {
   const configured = isSupabaseConfigured();
   const { user } = useSocial();
   const [rows, setRows] = useState<LeaderboardCallRow[]>([]);
+  const [results, setResults] = useState<MatchResults | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
-    fetchAllCalls()
-      .then((data) => {
+    Promise.all([fetchAllCalls(), fetchMatchResults()])
+      .then(([data, matchResults]) => {
         setRows(data);
+        setResults(matchResults);
         setLoaded(true);
       })
       .catch(() => {
@@ -57,7 +61,10 @@ export default function LeaderboardPage() {
       });
   }, []);
 
-  const entries = useMemo(() => rankEntries(rows), [rows]);
+  const entries = useMemo(
+    () => (results ? rankEntries(rows, results) : []),
+    [rows, results]
+  );
 
   if (!configured) {
     return (

@@ -4,8 +4,17 @@
 
 ## Features
 
+### The tabs
+- **Home** — everything in one place: trending stands, live matches, latest blogs and videos, the fan wall
+- **Predict** — the Call (match winner) and the Pulse (over-by-over, half-by-half, quarter-by-quarter) on every match
+- **Live** — in-play matches across sports, each one a live chant stream
+- **Support** — pick your side on every match (heart, not head); fanbase standings
+- **Blogs** — long-form fan takes, tied to a sport or match
+- **Videos** — YouTube links (highlights, pressers, fan cams) on every match hub
+- **IPL Lab** — the original cricket engine: standings, Monte Carlo odds, simulators
+
 ### Social — any sport
-- **Match Hubs** — Every match has a shareable page (`/match/<id>`) with Chants, Roars, Calls, and a live crowd split. Add a row to the `matches` table for *any* sport and it gets a hub automatically
+- **Match Hubs** — Every match has a shareable page (`/match/<id>`) with Support, Calls, Pulse predictions, Videos, and Chants. Add a row to the `matches` table for *any* sport and it gets a hub automatically
 - **Sports Directory** — `/sports` lists every league and match with an open hub
 - **Fan Profiles** — Every fan has a public page (`/fan/<username>`) with their call record, streaks, badges, and recent chants
 - **Fan Leaderboard** — Fans ranked by correct Calls across all sports (`/leaderboard`), with badges like 🔥 On fire and 🎯 Sharpshooter
@@ -66,7 +75,7 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 Setup:
 
 1. Create a free project at [supabase.com](https://supabase.com/dashboard).
-2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0004`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, and multi-sport matches.
+2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0005`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, multi-sport matches, and the pulse/support/blogs/videos features.
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
 
@@ -83,6 +92,16 @@ Admins keep the feeds clean: they can remove any Chant, review fan reports, and 
    ```
 
 3. Reload the app — a **Moderation** entry appears in your account menu (or go to `/admin`).
+
+Admins also grade **Pulse** segments as a match unfolds (locks that phase and scores everyone's picks):
+
+```sql
+insert into public.segment_results (match_id, segment, winner_team_id)
+values ('m60', 'ov1_5', 'kkr')
+on conflict (match_id, segment) do update set winner_team_id = excluded.winner_team_id;
+```
+
+And can feature a match on the Live tab with `update public.matches set is_live = true where id = 'fb1';`
 
 The dashboard shows totals (fans, chants, roars, calls, reports), the reported-chants queue (delete the chant, ban the author, or dismiss the report), and the latest chants across all matches. All admin powers are enforced by row-level security, and privilege flags (`is_admin`, `is_banned`) are trigger-guarded so users cannot change them through the API. Banned fans keep read access but cannot post, roar, call, or report.
 

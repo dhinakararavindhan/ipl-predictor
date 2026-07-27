@@ -15,6 +15,7 @@ import { formatNRR } from '@/lib/utils';
 import { Radio, RefreshCw, Wifi, WifiOff, Clock, MessagesSquare } from 'lucide-react';
 import { Team } from '@/lib/types';
 import Link from 'next/link';
+import { LiveStands } from '@/components/social/LiveStands';
 
 const REFRESH_INTERVAL = 30_000; // 30 seconds
 
@@ -368,7 +369,7 @@ export default function LivePage() {
             Live
           </h1>
           <p className="text-muted mt-1 text-sm">
-            Today's match · Win prediction · Live standings
+            In-play matches · Live chants · Win prediction · Standings
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -397,6 +398,9 @@ export default function LivePage() {
           </button>
         </div>
       </div>
+
+      {/* In-play matches across every sport — live comment streams */}
+      <LiveStands />
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left: live match card */}

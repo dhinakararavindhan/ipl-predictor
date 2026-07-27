@@ -130,6 +130,25 @@ export async function fetchOtherSportMatches(): Promise<MatchInfo[]> {
   return (data ?? []).map(mapDbMatch);
 }
 
+// Matches flagged live in the DB plus cricket fixtures that are in play.
+export async function fetchLiveMatches(): Promise<MatchInfo[]> {
+  const live: MatchInfo[] = FIXTURES.filter(
+    (f) => !f.isCompleted && (f.score_1 || f.score_2)
+  ).map(cricketMatchInfo);
+  const supabase = getSupabase();
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('matches')
+      .select('*')
+      .eq('is_live', true)
+      .neq('sport', 'cricket');
+    if (!error && data) {
+      live.push(...data.map((row) => ({ ...mapDbMatch(row), isLive: true })));
+    }
+  }
+  return live;
+}
+
 // The most-chanted matches across every sport, with their chant counts.
 export async function fetchTrendingMatches(
   limit = 3

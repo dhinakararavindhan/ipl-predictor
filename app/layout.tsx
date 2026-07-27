@@ -7,7 +7,7 @@ import { SupabaseProvider } from '@/components/social/SupabaseProvider';
 import { AuthButton } from '@/components/social/AuthButton';
 import { NotificationsBell } from '@/components/social/NotificationsBell';
 import Link from 'next/link';
-import { Activity, BarChart3, Zap, Radio, Lightbulb, Target, Wrench, Trophy, Crown, Globe } from 'lucide-react';
+import { Radio, Crown, Globe, Megaphone, Heart, BookOpen, MonitorPlay, FlaskConical } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: {
@@ -70,32 +70,11 @@ export default function RootLayout({
                 {/* Nav Links */}
                 <div className="flex items-center gap-0.5 overflow-x-auto">
                   <Link
-                    href="/sports"
+                    href="/predict"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    <Globe className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Sports</span>
-                  </Link>
-                  <Link
-                    href="/match"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
-                  >
-                    <Trophy className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Match Predictor</span>
-                  </Link>
-                  <Link
-                    href="/cap-predictor"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
-                  >
-                    <Trophy className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Cap Predictor</span>
-                  </Link>
-                  <Link
-                    href="/"
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
-                  >
-                    <Activity className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Standings</span>
+                    <Megaphone className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Predict</span>
                   </Link>
                   <Link
                     href="/live"
@@ -105,39 +84,39 @@ export default function RootLayout({
                     <span className="hidden sm:inline">Live</span>
                   </Link>
                   <Link
-                    href="/simulator"
+                    href="/support"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    <Zap className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Simulator</span>
+                    <Heart className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Support</span>
                   </Link>
                   <Link
-                    href="/scenarios"
+                    href="/blogs"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    <Lightbulb className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Scenarios</span>
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Blogs</span>
                   </Link>
                   <Link
-                    href="/predict"
+                    href="/videos"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    <Target className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Predict</span>
+                    <MonitorPlay className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Videos</span>
                   </Link>
                   <Link
-                    href="/tools"
+                    href="/sports"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    <Wrench className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Tools</span>
+                    <Globe className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">Sports</span>
                   </Link>
                   <Link
-                    href="/analytics"
+                    href="/lab"
                     className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted hover:text-primary transition-colors whitespace-nowrap"
                   >
-                    <BarChart3 className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">Analytics</span>
+                    <FlaskConical className="w-3.5 h-3.5" />
+                    <span className="hidden md:inline">IPL Lab</span>
                   </Link>
                   <Link
                     href="/leaderboard"

@@ -14,6 +14,9 @@ import { SignInDialog } from './SignInDialog';
 import { ShareButton } from './ShareButton';
 import { TeamBadge } from './TeamBadge';
 import { CallWidget } from './CallWidget';
+import { SupportMeter } from './SupportMeter';
+import { PulsePredictor } from './PulsePredictor';
+import { VideoSection } from './VideoSection';
 import { ChantComposer } from './ChantComposer';
 import { ChantFeed } from './ChantFeed';
 
@@ -179,16 +182,21 @@ export function MatchSocialHub({ match }: { match: MatchInfo }) {
         </div>
       </div>
 
-      {/* Calls */}
+      {/* Support + Calls + Pulse */}
       {configured ? (
-        <CallWidget
-          match={match}
-          myCallTeamId={effectiveMyCall}
-          split={split}
-          onCallMade={onCallMade}
-          onCallFailed={refetchCalls}
-          onNeedSignIn={() => setSignInOpen(true)}
-        />
+        <>
+          <SupportMeter match={match} onNeedSignIn={() => setSignInOpen(true)} />
+          <CallWidget
+            match={match}
+            myCallTeamId={effectiveMyCall}
+            split={split}
+            onCallMade={onCallMade}
+            onCallFailed={refetchCalls}
+            onNeedSignIn={() => setSignInOpen(true)}
+          />
+          <PulsePredictor match={match} onNeedSignIn={() => setSignInOpen(true)} />
+          <VideoSection matchId={match.id} onNeedSignIn={() => setSignInOpen(true)} />
+        </>
       ) : (
         <SupabaseSetupNotice feature="Calls and Chants" />
       )}

@@ -49,11 +49,27 @@ Each service deploys independently:
 | Service | Local dev | Production options |
 |---|---|---|
 | **web** | `npm run dev` | Vercel (set Root Directory to `apps/web`) or `apps/web/Dockerfile` |
-| **fixtures-sync** | `npm run sync:worker` (or `sync:once`) | its Dockerfile, any container host — or skip it and use the web app's cron route |
+| **fixtures-sync** (upstream) | `npm run sync:worker` / `sync:once` | `services/Dockerfile.worker`, any container host — or the web app's cron route |
+| **notifier** (downstream) | `npm run notifier:worker` / `notifier:once` | same worker image, `SERVICE=notifier` |
+| **trends** (downstream) | `npm run trends:worker` / `trends:once` | same worker image, `SERVICE=trends` |
 | **data platform** | `npx supabase start` | Supabase cloud |
 | **mobile** | `npm run mobile:android` / `mobile:ios` | Play Store / App Store |
 
-`docker compose up` builds and runs web + fixtures-sync side by side (put env values in `.env`). New services (notifications, digests, feed aggregation…) follow the same pattern: a folder in `services/`, shared logic in `packages/core`.
+`docker compose up` builds and runs web + all workers side by side (put env values in `.env`).
+
+### The pipeline: upstream → downstream
+
+```
+UPSTREAM                          THE BUS                       DOWNSTREAM
+fixtures-sync ──┐                                            ┌─→ notifier → notifications (fan inboxes, the 🔔)
+admin actions ──┼─→ matches / chants / … ──→ events ─────────┼─→ trends   → match_stats (chant badges)
+fans posting ───┘    (DB triggers emit)      (+ cursors)     └─→ your next service…
+```
+
+- **Upstream** is anything that writes: the fixtures-sync worker, admins recording results, fans chanting. Database triggers turn those writes into domain events (`match.live`, `match.completed`, `segment.decided`, `chant.posted`, `chant.deleted`) on the `events` table — producers don't know or care who listens.
+- **Downstream** services each own a named cursor in `service_cursors` and consume the stream at their own pace via `consumeEvents()` from `@thestands/core` — at-least-once delivery, idempotent handlers (unique keys and recounts, never blind increments). A crashed service resumes where it left off; a new service starts from wherever you point its cursor.
+- **Current consumers**: `notifier` fans events out into per-fan inboxes (live alerts, call results, pulse grades — surfaced in the web app's bell) and `trends` materializes per-match aggregates the UI reads instead of counting rows.
+- **Adding a service** = a folder in `services/` with a `worker.ts` calling `consumeEvents(supabase, 'your-name', handler)`, an entry in `docker-compose.yml`, done. Push notifications, weekly digests, feed ranking, and anti-spam scoring all slot in without touching upstream.
 
 ## Tech Stack
 
@@ -101,7 +117,7 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 Setup:
 
 1. Create a free project at [supabase.com](https://supabase.com/dashboard).
-2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0006`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, multi-sport matches, the pulse/support/blogs/videos features, and multi-provider sign-in.
+2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0007`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, multi-sport matches, the pulse/support/blogs/videos features, multi-provider sign-in, and the event bus.
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
 

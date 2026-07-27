@@ -1,10 +1,19 @@
 # The Stands — multi-service stack
 #
-#   docker compose up            # web + fixtures-sync
+#   docker compose up            # web + all workers
 #   npx supabase start           # the data platform (auth/db/realtime) runs
 #                                # via the Supabase CLI's own compose stack
 #
 # Put real values in .env (compose reads it automatically).
+#
+# Pipeline: fixtures-sync (upstream) writes matches; database triggers emit
+# domain events; notifier + trends (downstream) consume the bus and write
+# fan inboxes and match aggregates that the web app reads.
+
+x-worker-env: &worker-env
+  NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+
 services:
   web:
     build:
@@ -26,11 +35,31 @@ services:
   fixtures-sync:
     build:
       context: .
-      dockerfile: services/fixtures-sync/Dockerfile
+      dockerfile: services/Dockerfile.worker
+      args: { SERVICE: fixtures-sync }
     environment:
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      <<: *worker-env
       SYNC_INTERVAL_MINUTES: ${SYNC_INTERVAL_MINUTES:-5}
       FOOTBALL_DATA_TOKEN: ${FOOTBALL_DATA_TOKEN:-}
       FOOTBALL_DATA_COMPETITIONS: ${FOOTBALL_DATA_COMPETITIONS:-PL}
+    restart: unless-stopped
+
+  notifier:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.worker
+      args: { SERVICE: notifier }
+    environment:
+      <<: *worker-env
+      NOTIFY_INTERVAL_SECONDS: ${NOTIFY_INTERVAL_SECONDS:-30}
+    restart: unless-stopped
+
+  trends:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.worker
+      args: { SERVICE: trends }
+    environment:
+      <<: *worker-env
+      TRENDS_INTERVAL_SECONDS: ${TRENDS_INTERVAL_SECONDS:-60}
     restart: unless-stopped

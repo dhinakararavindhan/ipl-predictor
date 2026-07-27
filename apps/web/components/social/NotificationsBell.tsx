@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bell, Reply, Volume2 } from 'lucide-react';
-import { fetchMyActivity } from '@/lib/social/api';
+import { fetchInbox, fetchMyActivity, InboxItem, markInboxSeen } from '@/lib/social/api';
 import { ActivityItem } from '@/lib/social/types';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useSocial } from './SupabaseProvider';
@@ -25,6 +25,7 @@ export function NotificationsBell() {
   const { configured, user } = useSocial();
   const userId = user?.id;
   const [items, setItems] = useState<ActivityItem[]>([]);
+  const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [open, setOpen] = useState(false);
   // safe to read in the initializer: items is [] at hydration, so seenAt
   // can't change the server-rendered output
@@ -35,6 +36,7 @@ export function NotificationsBell() {
   const refresh = useCallback(() => {
     if (!userId) return;
     fetchMyActivity(userId).then(setItems).catch(() => {});
+    fetchInbox().then(setInbox).catch(() => {});
   }, [userId]);
 
   useEffect(() => {
@@ -52,13 +54,20 @@ export function NotificationsBell() {
 
   if (!configured || !user) return null;
 
-  const unseen = items.filter((i) => !seenAt || i.createdAt > seenAt).length;
+  const unseen =
+    items.filter((i) => !seenAt || i.createdAt > seenAt).length +
+    inbox.filter((i) => !i.seen).length;
 
   const openBell = () => {
     setOpen(true);
     const now = new Date().toISOString();
     localStorage.setItem(SEEN_KEY, now);
     setSeenAt(now);
+    if (inbox.some((i) => !i.seen)) {
+      markInboxSeen()
+        .then(() => setInbox((prev) => prev.map((i) => ({ ...i, seen: true }))))
+        .catch(() => {});
+    }
   };
 
   return (
@@ -79,11 +88,28 @@ export function NotificationsBell() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent title="Crowd noise" description="Replies and roars on your chants.">
-          {items.length === 0 ? (
+          {inbox.length > 0 && (
+            <div className="space-y-2 mb-2">
+              {inbox.slice(0, 8).map((note) => (
+                <Link
+                  key={note.id}
+                  href={note.matchId ? `/match/${note.matchId}` : '/'}
+                  onClick={() => setOpen(false)}
+                  className="block rounded-xl p-2.5 transition-colors hover:bg-indigo-500/5"
+                  style={{ background: 'var(--row-hover)', border: '1px solid var(--border)' }}
+                >
+                  <p className="text-xs font-semibold text-primary">{note.title}</p>
+                  {note.body && <p className="text-[11px] text-muted mt-0.5">{note.body}</p>}
+                  <span className="text-[10px] text-faint">{timeAgo(note.createdAt)} ago</span>
+                </Link>
+              ))}
+            </div>
+          )}
+          {items.length === 0 && inbox.length === 0 ? (
             <p className="text-sm text-muted py-2">
               All quiet for now — post a chant and get the crowd going.
             </p>
-          ) : (
+          ) : items.length === 0 ? null : (
             <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
               {items.map((item) => {
                 const name = item.actor.displayName || item.actor.username;

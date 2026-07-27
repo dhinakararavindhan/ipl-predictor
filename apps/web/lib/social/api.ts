@@ -206,6 +206,42 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
   return data ? mapProfile(data) : null;
 }
 
+// ── Server inbox (written by the notifier service) ──────────────────────────
+
+export interface InboxItem {
+  id: string;
+  kind: string;
+  title: string;
+  body: string | null;
+  matchId: string | null;
+  seen: boolean;
+  createdAt: string;
+}
+
+export async function fetchInbox(limit = 20): Promise<InboxItem[]> {
+  const supabase = supabaseOrThrow();
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('id, kind, title, body, match_id, seen, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    kind: row.kind,
+    title: row.title,
+    body: row.body ?? null,
+    matchId: row.match_id ?? null,
+    seen: row.seen,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function markInboxSeen(): Promise<void> {
+  const supabase = supabaseOrThrow();
+  await supabase.from('notifications').update({ seen: true }).eq('seen', false);
+}
+
 // ── Activity feed (notifications bell) ──────────────────────────────────────
 
 export async function fetchMyActivity(userId: string, limit = 20): Promise<ActivityItem[]> {

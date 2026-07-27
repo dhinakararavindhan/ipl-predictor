@@ -1,0 +1,21 @@
+# The Stands — generic worker-service image
+# Build from the repo root, picking the service:
+#   docker build -f services/Dockerfile.worker --build-arg SERVICE=notifier .
+FROM node:22-alpine
+ARG SERVICE=fixtures-sync
+WORKDIR /repo
+
+# workspace manifests first for layer caching
+COPY package.json package-lock.json ./
+COPY packages/core/package.json packages/core/
+COPY services/fixtures-sync/package.json services/fixtures-sync/
+COPY services/notifier/package.json services/notifier/
+COPY services/trends/package.json services/trends/
+COPY apps/web/package.json apps/web/
+RUN npm ci --omit=dev --ignore-scripts
+
+COPY packages/core packages/core
+COPY services services
+
+ENV NODE_ENV=production SERVICE=$SERVICE
+CMD npm start -w services/$SERVICE

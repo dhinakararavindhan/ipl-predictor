@@ -63,3 +63,16 @@ services:
       <<: *worker-env
       TRENDS_INTERVAL_SECONDS: ${TRENDS_INTERVAL_SECONDS:-60}
     restart: unless-stopped
+
+  push-delivery:
+    build:
+      context: .
+      dockerfile: services/Dockerfile.worker
+      args: { SERVICE: push-delivery }
+    environment:
+      <<: *worker-env
+      PUSH_INTERVAL_SECONDS: ${PUSH_INTERVAL_SECONDS:-20}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+    restart: unless-stopped

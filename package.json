@@ -20,7 +20,9 @@
     "notifier:once": "npm run once -w services/notifier",
     "notifier:worker": "npm run start -w services/notifier",
     "trends:once": "npm run once -w services/trends",
-    "trends:worker": "npm run start -w services/trends"
+    "trends:worker": "npm run start -w services/trends",
+    "push:once": "npm run once -w services/push-delivery",
+    "push:worker": "npm run start -w services/push-delivery"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",

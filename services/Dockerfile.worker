@@ -11,6 +11,7 @@ COPY packages/core/package.json packages/core/
 COPY services/fixtures-sync/package.json services/fixtures-sync/
 COPY services/notifier/package.json services/notifier/
 COPY services/trends/package.json services/trends/
+COPY services/push-delivery/package.json services/push-delivery/
 COPY apps/web/package.json apps/web/
 RUN npm ci --omit=dev --ignore-scripts
 

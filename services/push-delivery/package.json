@@ -1,0 +1,15 @@
+{
+  "name": "@thestands/push-delivery",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/worker.ts",
+    "once": "tsx src/worker.ts --once"
+  },
+  "dependencies": {
+    "@thestands/core": "*",
+    "tsx": "^4.19.0",
+    "web-push": "^3.6.7"
+  }
+}

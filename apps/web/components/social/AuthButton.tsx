@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { LogOut, Pencil, ShieldCheck, UserRound } from 'lucide-react';
+import { BellRing, LogOut, Pencil, ShieldCheck, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useSocial } from './SupabaseProvider';
 import { SignInDialog } from './SignInDialog';
 import { EditProfileDialog } from './EditProfileDialog';
 import { UserAvatar } from './UserAvatar';
+import { enablePush, pushSupported } from '@/lib/social/push';
 
 const ONBOARDED_KEY = 'stands-onboarded';
 
@@ -17,6 +18,7 @@ export function AuthButton() {
   const [signInOpen, setSignInOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [pushState, setPushState] = useState<string | null>(null);
 
   // Fresh accounts still carry the generated fan_xxxxxxxx username — walk
   // them straight into picking a name and a favourite team, once.
@@ -74,6 +76,29 @@ export function AuthButton() {
               <Pencil className="w-3.5 h-3.5" />
               Edit profile
             </Button>
+            {pushSupported() && (
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={async () => {
+                  setPushState('working');
+                  const result = await enablePush(user.id);
+                  setPushState(
+                    result === 'enabled'
+                      ? 'Push alerts on — this device will hear the crowd.'
+                      : result === 'denied'
+                      ? 'Notifications are blocked for this site in your browser.'
+                      : 'Could not enable push on this device.'
+                  );
+                }}
+              >
+                <BellRing className="w-3.5 h-3.5" />
+                {pushState === 'working' ? 'Enabling…' : 'Enable push alerts'}
+              </Button>
+            )}
+            {pushState && pushState !== 'working' && (
+              <p className="text-[11px] text-muted px-1">{pushState}</p>
+            )}
             {profile?.isAdmin && (
               <Link href="/admin" className="block" onClick={() => setMenuOpen(false)}>
                 <Button variant="outline" className="w-full justify-start">

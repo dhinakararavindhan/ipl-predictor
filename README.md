@@ -52,6 +52,7 @@ Each service deploys independently:
 | **fixtures-sync** (upstream) | `npm run sync:worker` / `sync:once` | `services/Dockerfile.worker`, any container host — or the web app's cron route |
 | **notifier** (downstream) | `npm run notifier:worker` / `notifier:once` | same worker image, `SERVICE=notifier` |
 | **trends** (downstream) | `npm run trends:worker` / `trends:once` | same worker image, `SERVICE=trends` |
+| **push-delivery** (downstream) | `npm run push:worker` / `push:once` | same worker image, `SERVICE=push-delivery` |
 | **data platform** | `npx supabase start` | Supabase cloud |
 | **mobile** | `npm run mobile:android` / `mobile:ios` | Play Store / App Store |
 
@@ -68,7 +69,11 @@ fans posting ───┘    (DB triggers emit)      (+ cursors)     └─→ y
 
 - **Upstream** is anything that writes: the fixtures-sync worker, admins recording results, fans chanting. Database triggers turn those writes into domain events (`match.live`, `match.completed`, `segment.decided`, `chant.posted`, `chant.deleted`) on the `events` table — producers don't know or care who listens.
 - **Downstream** services each own a named cursor in `service_cursors` and consume the stream at their own pace via `consumeEvents()` from `@thestands/core` — at-least-once delivery, idempotent handlers (unique keys and recounts, never blind increments). A crashed service resumes where it left off; a new service starts from wherever you point its cursor.
-- **Current consumers**: `notifier` fans events out into per-fan inboxes (live alerts, call results, pulse grades — surfaced in the web app's bell) and `trends` materializes per-match aggregates the UI reads instead of counting rows.
+- **Current consumers**: `notifier` fans events out into per-fan inboxes (live alerts, call results, pulse grades — surfaced in the web app's bell), `trends` materializes per-match aggregates the UI reads instead of counting rows, and `push-delivery` (downstream of the notifier: inbox inserts emit `notification.created`) sends each inbox row to the fan's registered devices over Web Push.
+
+### Push alerts to devices
+
+Self-hosted Web Push — no Firebase account. Generate keys once (`npx web-push generate-vapid-keys`), set `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT` for the push-delivery service and `NEXT_PUBLIC_VAPID_PUBLIC_KEY` for the web app. Fans tap **Enable push alerts** in their account menu; each browser/device registers in `push_subscriptions`; dead devices are pruned automatically on 404/410. Without keys the service runs in dry-run mode, logging what it would send — handy in development. (iOS web push requires the PWA to be added to the home screen; the Capacitor shells can later add native APNs via the push plugin.)
 - **Adding a service** = a folder in `services/` with a `worker.ts` calling `consumeEvents(supabase, 'your-name', handler)`, an entry in `docker-compose.yml`, done. Push notifications, weekly digests, feed ranking, and anti-spam scoring all slot in without touching upstream.
 
 ## Tech Stack
@@ -117,7 +122,7 @@ Every match gets a hub at `/match/<id>` (e.g. `/match/m56`) where signed-in fans
 Setup:
 
 1. Create a free project at [supabase.com](https://supabase.com/dashboard).
-2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0007`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, multi-sport matches, the pulse/support/blogs/videos features, multi-provider sign-in, and the event bus.
+2. Open the SQL editor and run the files in `supabase/migrations/` in order (`0001` through `0008`) — tables, row-level security, signup trigger, fixture seed, moderation, threaded replies, multi-sport matches, the pulse/support/blogs/videos features, multi-provider sign-in, the event bus, and push subscriptions.
 3. For development, disable **Authentication → Sign In / Up → Confirm email** so password sign-ups work instantly. Leave it on in production.
 4. Copy the project URL and anon key from **Project Settings → API** into `.env.local`.
 

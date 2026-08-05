@@ -89,3 +89,106 @@ body {
     radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
     #0a0a0f;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Personal Finance Dashboard (/finance)
+   Scoped tokens: light is the primary look (matches the reference design);
+   dark mode re-steps surfaces while keeping the navy sidebar.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.finance-root {
+  --fin-sidebar:        #0b1c4d;
+  --fin-sidebar-hover:  rgba(255, 255, 255, 0.08);
+  --fin-sidebar-active: #2563eb;
+  --fin-topbar:         #0b1c4d;
+  --fin-bg:             #eef2f7;
+  --fin-card:           #ffffff;
+  --fin-border:         #e3e8f0;
+  --fin-text:           #10203e;
+  --fin-text-muted:     #5b6b85;
+  --fin-text-faint:     #8b98ad;
+  --fin-good:           #0e9f6e;
+  --fin-good-bg:        #e6f7f0;
+  --fin-bad:            #dc2626;
+  --fin-bad-bg:         #fdeeee;
+  --fin-accent:         #2563eb;
+  --fin-accent-bg:      #e8effc;
+  --fin-track:          #e5e9f0;
+}
+
+.dark .finance-root {
+  --fin-sidebar:        #0a1638;
+  --fin-sidebar-hover:  rgba(255, 255, 255, 0.08);
+  --fin-sidebar-active: #2563eb;
+  --fin-topbar:         #0a1638;
+  --fin-bg:             #0d1117;
+  --fin-card:           #161c26;
+  --fin-border:         #28303e;
+  --fin-text:           #e8edf5;
+  --fin-text-muted:     #97a3b8;
+  --fin-text-faint:     #64708a;
+  --fin-good:           #34d399;
+  --fin-good-bg:        rgba(52, 211, 153, 0.12);
+  --fin-bad:            #f87171;
+  --fin-bad-bg:         rgba(248, 113, 113, 0.12);
+  --fin-accent:         #60a5fa;
+  --fin-accent-bg:      rgba(96, 165, 250, 0.12);
+  --fin-track:          #28303e;
+}
+
+.finance-root {
+  background: var(--fin-bg);
+  color: var(--fin-text);
+}
+
+.fin-card {
+  background: var(--fin-card);
+  border: 1px solid var(--fin-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(16, 32, 62, 0.05);
+}
+
+.fin-input {
+  background: var(--fin-card);
+  border: 1px solid var(--fin-border);
+  border-radius: 0.5rem;
+  color: var(--fin-text);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  width: 100%;
+  outline: none;
+}
+.fin-input:focus {
+  border-color: var(--fin-accent);
+  box-shadow: 0 0 0 3px var(--fin-accent-bg);
+}
+
+.fin-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--fin-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.fin-btn-primary {
+  background: var(--fin-accent);
+  color: #ffffff;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  transition: opacity 0.15s ease;
+}
+.fin-btn-primary:hover { opacity: 0.9; }
+.fin-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.fin-btn-ghost {
+  border: 1px solid var(--fin-border);
+  color: var(--fin-text-muted);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background: var(--fin-card);
+}
+.fin-btn-ghost:hover { color: var(--fin-text); border-color: var(--fin-text-faint); }

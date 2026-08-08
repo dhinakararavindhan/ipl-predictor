@@ -97,6 +97,36 @@ export const AI_CHARACTERS: AiCharacter[] = [
       playerSolved: ['You win. This time.', 'Acknowledged.'],
     },
   },
+  {
+    id: 'professor',
+    name: 'Professor',
+    emoji: '🦉',
+    blurb: 'Has read everything. Twice.',
+    clueMod: 0.15,
+    numericMod: -0.05,
+    lines: {
+      start: ['Ah, a pop quiz. Delightful.', 'Class is in session.'],
+      aiWrong: ['Hmm, a footnote I missed.', 'Curious. Most curious.'],
+      playerWrong: ['Close! See chapter three.', 'A common misconception.'],
+      aiSolved: ['As the literature suggests.', 'Q.E.D., my friend.'],
+      playerSolved: ['Full marks! Splendid.', 'You may go to the head of the class.'],
+    },
+  },
+  {
+    id: 'trickster',
+    name: 'Trickster',
+    emoji: '😈',
+    blurb: 'Plays weird. Wins weirder.',
+    clueMod: 0.05,
+    numericMod: 0.05,
+    lines: {
+      start: ['Let’s make this interesting…', 'I know something you don’t.'],
+      aiWrong: ['All part of the plan.', 'Oops. Or was it?'],
+      playerWrong: ['Warmer… colder… who knows?', 'Hehehe.'],
+      aiSolved: ['Ta-da! 🎩', 'The trick? There was no trick.'],
+      playerSolved: ['You saw through me!', 'A worthy trickster yourself.'],
+    },
+  },
 ];
 
 export function getCharacter(id: AiCharacterId): AiCharacter {

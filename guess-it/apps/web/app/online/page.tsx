@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Difficulty, Mechanic } from '@guess-it/engine';
 import { MECHANIC_META, WORLDS } from '@guess-it/content';
 import { REALTIME_URL, useOnline } from '@/lib/online';
+import { sfx } from '@/lib/sound';
 import { useProfile } from '@/lib/store';
 import { OpponentBar, RaceClue, RaceExact, RaceHigherLower } from '@/components/RaceGame';
 
@@ -42,6 +43,14 @@ export default function OnlinePage() {
 
   // leaving the page leaves the room
   useEffect(() => () => useOnline.getState().leave(), []);
+
+  // race sound
+  useEffect(() => {
+    if (!online.gameOver) return;
+    const won = online.gameOver.outcome === 'WIN' || online.gameOver.outcome === 'WALKOVER';
+    if (won) sfx.win();
+    else sfx.lose();
+  }, [online.gameOver]);
 
   if (!mounted) return null;
 

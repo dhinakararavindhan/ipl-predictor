@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HINT_COSTS, potentialScore, type HintType } from '@guess-it/engine';
 import { MECHANIC_META } from '@guess-it/content';
+import { sfx } from '@/lib/sound';
 import { useProfile, useSession } from '@/lib/store';
 import { AiPanel } from '@/components/AiPanel';
 import { ClueGame } from '@/components/ClueGame';
@@ -58,6 +59,22 @@ export default function GamePage() {
 
   // clear "new achievement" flags when leaving the result
   useEffect(() => () => clearNewlyUnlocked(), [clearNewlyUnlocked]);
+
+  // sound juice: react to game-state transitions
+  const prevGame = useRef<{ attempts: number; status: string } | null>(null);
+  useEffect(() => {
+    const g = session.game;
+    if (!g) {
+      prevGame.current = null;
+      return;
+    }
+    const prev = prevGame.current;
+    prevGame.current = { attempts: g.attemptsUsed, status: g.status };
+    if (!prev) return;
+    if (prev.status === 'ACTIVE' && g.status === 'WON') sfx.win();
+    else if (prev.status === 'ACTIVE' && (g.status === 'LOST' || g.status === 'FORFEITED')) sfx.lose();
+    else if (g.status === 'ACTIVE' && g.attemptsUsed > prev.attempts) sfx.bad();
+  }, [session.game]);
 
   if (!mounted) return null;
   const { game, def, ai } = session;

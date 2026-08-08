@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { titleForLevel, xpForLevel } from '@guess-it/engine';
+import { useEffect, useMemo, useState } from 'react';
+import { titleForLevel, xpForLevel, type Mechanic } from '@guess-it/engine';
+import { MECHANIC_META, WORLDS } from '@guess-it/content';
 import { ACHIEVEMENTS, playerLevel, useProfile } from '@/lib/store';
 
 const AVATARS = ['🧠', '🕵️', '🦊', '🐯', '🚀', '🎯', '👾', '🐙', '🌟', '🔥'];
@@ -86,6 +87,9 @@ export default function ProfilePage() {
         ))}
       </div>
 
+      {/* deep stats */}
+      {p.history.length > 0 && <StatsSection />}
+
       {/* achievements */}
       <section>
         <h2 className="mb-2 text-xs font-semibold tracking-widest" style={{ color: 'var(--text-dim)' }}>
@@ -113,5 +117,76 @@ export default function ProfilePage() {
         ⚙️ Settings & privacy
       </Link>
     </main>
+  );
+}
+
+function StatsSection() {
+  const history = useProfile((s) => s.history);
+  const races = useProfile((s) => s.races);
+
+  const stats = useMemo(() => {
+    const byMechanic = new Map<Mechanic, { games: number; wins: number }>();
+    const byWorld = new Map<string, { games: number; wins: number }>();
+    let winTime = 0;
+    let winCount = 0;
+    for (const h of history) {
+      const m = byMechanic.get(h.mechanic) ?? { games: 0, wins: 0 };
+      m.games++;
+      if (h.outcome === 'WON') m.wins++;
+      byMechanic.set(h.mechanic, m);
+      const w = byWorld.get(h.world) ?? { games: 0, wins: 0 };
+      w.games++;
+      if (h.outcome === 'WON') w.wins++;
+      byWorld.set(h.world, w);
+      if (h.outcome === 'WON' && h.durationMs > 0) {
+        winTime += h.durationMs;
+        winCount++;
+      }
+    }
+    return { byMechanic: [...byMechanic.entries()], byWorld: [...byWorld.entries()], avgWinMs: winCount ? winTime / winCount : 0 };
+  }, [history]);
+
+  return (
+    <section>
+      <h2 className="mb-2 text-xs font-semibold tracking-widest" style={{ color: 'var(--text-dim)' }}>
+        YOUR GAME, BY THE NUMBERS
+      </h2>
+      <div className="card flex flex-col gap-3 p-4">
+        {stats.byMechanic.map(([mech, s]) => {
+          const rate = Math.round((s.wins / s.games) * 100);
+          return (
+            <div key={mech}>
+              <div className="flex justify-between text-xs">
+                <span>
+                  {MECHANIC_META[mech].emoji} {MECHANIC_META[mech].name}
+                </span>
+                <span className="digits" style={{ color: 'var(--text-dim)' }}>
+                  {s.wins}/{s.games} · {rate}%
+                </span>
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
+                <div className="h-full rounded-full" style={{ width: `${rate}%`, background: rate >= 50 ? 'var(--accent-2)' : 'var(--warn)' }} />
+              </div>
+            </div>
+          );
+        })}
+        <div className="flex flex-wrap gap-x-4 gap-y-1 border-t pt-2 text-[11px]" style={{ borderColor: 'var(--border)', color: 'var(--text-dim)' }}>
+          {stats.avgWinMs > 0 && <span>⏱️ Avg win: {(stats.avgWinMs / 1000).toFixed(0)}s</span>}
+          {races.played > 0 && (
+            <span>
+              ⚔️ Races: {races.won}/{races.played} won
+            </span>
+          )}
+          <span>
+            🌍 Best world:{' '}
+            {(() => {
+              const best = [...stats.byWorld].sort((a, b) => b[1].wins - a[1].wins)[0];
+              const w = WORLDS.find((x) => x.id === best?.[0]);
+              return w ? `${w.emoji} ${w.name}` : '—';
+            })()}
+          </span>
+        </div>
+      </div>
+    </section>
   );
 }

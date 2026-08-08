@@ -21,6 +21,7 @@ export const WORLDS: World[] = [
   { id: 'movies', name: 'Movies', emoji: '🎥', blurb: 'From Bollywood to blockbusters' },
   { id: 'heroes', name: 'Heroes', emoji: '🦸', blurb: 'Marvel, DC, anime & beyond' },
   { id: 'numbers', name: 'Numbers', emoji: '🔢', blurb: 'Codes, years, heights & records' },
+  { id: 'emoji', name: 'Emoji Riddles', emoji: '🎭', blurb: 'Decode the emoji, name the thing' },
   { id: 'anything', name: 'Anything', emoji: '🎲', blurb: 'Chaos mode — it could be anything' },
 ];
 
@@ -106,6 +107,7 @@ export function namespaceFor(world: string): string[] {
     actors: ['Salman Khan', 'Brad Pitt', 'Angelina Jolie', 'Chris Hemsworth', 'Deepika Padukone', 'Ajith Kumar', 'Will Smith', 'Emma Stone', 'Ranbir Kapoor', 'Nayanthara'],
     movies: ['Dangal', 'KGF 2', 'Pushpa', 'Avengers: Endgame', 'The Godfather', 'Gladiator', 'Frozen', 'Oppenheimer', 'Barbie', 'Leo'],
     heroes: ['Captain America', 'Black Panther', 'Aquaman', 'Luffy', 'Sailor Moon', 'He-Man', 'Flash', 'Green Lantern', 'Wolverine', 'Deadpool'],
+    emoji: ['Avatar', 'Shrek', 'Aladdin', 'Batman', 'WhatsApp', 'Instagram', 'Adidas', 'Pepsi', 'Harry Potter', 'Frozen'],
     anything: ['Amazon', 'Netflix', 'Statue of Liberty', 'Great Wall of China', 'Instagram', 'Tesla', 'PlayStation', 'McDonald’s', 'NASA', 'Mount Fuji'],
   };
   for (const d of decoys[world] ?? []) names.add(d);
@@ -135,4 +137,46 @@ export function dailyChallenge(dateKey: string = utcDateKey()): DailyPick {
 /** The daily game seed — same for every player on a given date (PRD GI-6.1). */
 export function dailySeed(dateKey: string): string {
   return `daily-seed:${dateKey}`;
+}
+
+// ---------- Weekly Gauntlet (BRD §23): 7 shared games per ISO week ----------
+
+/** ISO week key, e.g. 2026-W32 (UTC). */
+export function utcWeekKey(now: Date = new Date()): string {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const day = d.getUTCDay() || 7; // Mon=1..Sun=7
+  d.setUTCDate(d.getUTCDate() + 4 - day); // Thursday of this week decides the year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+export interface WeeklyGauntlet {
+  weekKey: string;
+  games: GameDefinition[]; // 7 games, same for everyone that week
+}
+
+/** Deterministic 7-game gauntlet: varied mechanics/worlds, no repeated answers. */
+export function weeklyGauntlet(weekKey: string = utcWeekKey()): WeeklyGauntlet {
+  const rng = new Rng(`weekly:${weekKey}`);
+  const pool = rng.shuffle(DEFINITIONS.filter((d) => d.mechanic !== 'IMAGE_REVEAL'));
+  const games: GameDefinition[] = [];
+  const usedAnswers = new Set<string>();
+  const usedMechanics = new Map<string, number>();
+  for (const def of pool) {
+    if (games.length >= 6) break;
+    const answer = def.answer?.name ?? def.id;
+    if (usedAnswers.has(answer)) continue;
+    if ((usedMechanics.get(def.mechanic) ?? 0) >= 2) continue; // variety
+    usedAnswers.add(answer);
+    usedMechanics.set(def.mechanic, (usedMechanics.get(def.mechanic) ?? 0) + 1);
+    games.push(def);
+  }
+  // finale: always a generated code game
+  games.push({ id: `gen-exact-weekly`, mechanic: 'EXACT_NUMBER', world: 'numbers', difficulty: 'MEDIUM' });
+  return { weekKey, games };
+}
+
+export function weeklySeed(weekKey: string, index: number): string {
+  return `weekly-seed:${weekKey}:${index}`;
 }

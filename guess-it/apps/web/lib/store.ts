@@ -35,7 +35,16 @@ import {
   type HintType,
   type Mechanic,
 } from '@guess-it/engine';
-import { dailyChallenge, dailySeed, getDefinition, pickDefinition, utcDateKey } from '@guess-it/content';
+import {
+  dailyChallenge,
+  dailySeed,
+  getDefinition,
+  pickDefinition,
+  utcDateKey,
+  utcWeekKey,
+  weeklyGauntlet,
+  weeklySeed,
+} from '@guess-it/content';
 import { track } from './analytics';
 import type { ChallengePayload } from './challenge';
 
@@ -47,7 +56,7 @@ export interface HistoryEntry {
   world: string;
   mechanic: Mechanic;
   difficulty: Difficulty;
-  mode: 'solo' | 'vs_ai';
+  mode: 'solo' | 'vs_ai' | 'race';
   aiCharacter?: AiCharacterId;
   aiLevel?: AiLevel;
   outcome: 'WON' | 'LOST' | 'FORFEITED';
@@ -58,6 +67,8 @@ export interface HistoryEntry {
   durationMs: number;
   endedAt: number;
   daily?: string; // dateKey when this was a daily challenge
+  weekly?: { weekKey: string; index: number };
+  opponentName?: string; // live races
 }
 
 export interface AchievementDef {
@@ -75,6 +86,10 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'perfect', name: 'Perfect', emoji: '💎', blurb: 'Win without hints or wrong guesses' },
   { key: 'lightning', name: 'Lightning', emoji: '⚡', blurb: 'Win in under 30 seconds' },
   { key: 'streak_master', name: 'Streak Master', emoji: '🔥', blurb: 'Reach a 7-day streak' },
+  { key: 'duelist', name: 'Duelist', emoji: '⚔️', blurb: 'Win a live race' },
+  { key: 'globetrotter', name: 'Globetrotter', emoji: '🌍', blurb: 'Win in 5 different worlds' },
+  { key: 'daily_devotee', name: 'Daily Devotee', emoji: '🎯', blurb: 'Complete 7 Daily Mysteries' },
+  { key: 'gauntlet', name: 'Gauntlet Runner', emoji: '🏁', blurb: 'Finish a Weekly Gauntlet' },
   { key: 'legend', name: 'Legend', emoji: '👑', blurb: 'Win 100 games' },
 ];
 
@@ -90,12 +105,17 @@ interface ProfileState {
   achievements: string[];
   history: HistoryEntry[];
   dailyResults: Record<string, { score: number; outcome: string }>;
+  weeklyResults: Record<string, { scores: (number | null)[] }>;
+  races: { played: number; won: number };
   playedDefIds: string[];
   newlyUnlocked: string[]; // shown on next result screen, then cleared
 
   setUsername: (name: string) => void;
   setAvatar: (a: string) => void;
-  recordResult: (entry: HistoryEntry, opts: { clueWin: boolean; numberWin: boolean; perfect: boolean }) => void;
+  recordResult: (
+    entry: HistoryEntry,
+    opts: { clueWin: boolean; numberWin: boolean; perfect: boolean; raceWin?: boolean },
+  ) => void;
   clearNewlyUnlocked: () => void;
   resetAll: () => void;
 }
@@ -123,6 +143,8 @@ export const useProfile = create<ProfileState>()(
       achievements: [],
       history: [],
       dailyResults: {},
+      weeklyResults: {},
+      races: { played: 0, won: 0 },
       playedDefIds: [],
       newlyUnlocked: [],
 
@@ -150,6 +172,24 @@ export const useProfile = create<ProfileState>()(
           p.history.filter((h) => h.outcome === 'WON' && (h.mechanic === 'EXACT_NUMBER' || h.mechanic === 'HIGHER_LOWER')).length +
           (opts.numberWin ? 1 : 0);
 
+        // weekly gauntlet bookkeeping
+        let weeklyResults = p.weeklyResults;
+        if (entry.weekly) {
+          const cur = p.weeklyResults[entry.weekly.weekKey]?.scores ?? Array<number | null>(7).fill(null);
+          const scores = cur.slice();
+          scores[entry.weekly.index] = entry.score;
+          weeklyResults = { ...p.weeklyResults, [entry.weekly.weekKey]: { scores } };
+        }
+        const weeklyDone =
+          entry.weekly && weeklyResults[entry.weekly.weekKey].scores.every((s) => s !== null);
+
+        const wonWorlds = new Set(
+          p.history.filter((h) => h.outcome === 'WON').map((h) => h.world),
+        );
+        if (won) wonWorlds.add(entry.world);
+        const dailyCount =
+          Object.keys(p.dailyResults).length + (entry.daily && !p.dailyResults[entry.daily] ? 1 : 0);
+
         const unlocked = new Set(p.achievements);
         const fresh: string[] = [];
         const grant = (key: string, cond: boolean) => {
@@ -165,9 +205,18 @@ export const useProfile = create<ProfileState>()(
         grant('perfect', won && opts.perfect);
         grant('lightning', won && entry.durationMs <= 30000);
         grant('streak_master', streak.current >= 7);
+        grant('duelist', !!opts.raceWin);
+        grant('globetrotter', wonWorlds.size >= 5);
+        grant('daily_devotee', dailyCount >= 7);
+        grant('gauntlet', !!weeklyDone);
         grant('legend', wins >= 100);
 
         set({
+          weeklyResults,
+          races:
+            entry.mode === 'race'
+              ? { played: p.races.played + 1, won: p.races.won + (opts.raceWin ? 1 : 0) }
+              : p.races,
           xp: p.xp + entry.xp,
           games: p.games + 1,
           wins,
@@ -199,6 +248,8 @@ export const useProfile = create<ProfileState>()(
           achievements: [],
           history: [],
           dailyResults: {},
+          weeklyResults: {},
+          races: { played: 0, won: 0 },
           playedDefIds: [],
           newlyUnlocked: [],
         }),
@@ -246,6 +297,7 @@ interface SessionState {
   ai: AiRuntime | null;
   mode: 'solo' | 'vs_ai' | 'duel';
   daily: string | null;
+  weekly: { weekKey: string; index: number } | null;
   challenge: ChallengeContext | null;
   duel: DuelContext | null;
   error: string | null;
@@ -255,6 +307,7 @@ interface SessionState {
 
   start: (config: StartConfig) => boolean;
   startDaily: () => boolean;
+  startWeekly: (index: number) => boolean;
   startChallenge: (p: ChallengePayload) => 'ok' | 'played' | 'invalid';
   guess: (text: string) => void;
   hint: (type: HintType) => void;
@@ -315,6 +368,7 @@ export const useSession = create<SessionState>()(
             durationMs: game.result.durationMs,
             endedAt: Date.now(),
             daily: s.daily ?? undefined,
+            weekly: s.weekly ?? undefined,
           },
           {
             clueWin: game.result.outcome === 'WON' && game.mechanic === 'CLUE_GUESS',
@@ -348,6 +402,7 @@ export const useSession = create<SessionState>()(
         ai: null,
         mode: 'solo',
         daily: null,
+        weekly: null,
         challenge: null,
         duel: null,
         error: null,
@@ -384,6 +439,7 @@ export const useSession = create<SessionState>()(
             ai,
             mode: dueling ? 'duel' : versus ? 'vs_ai' : 'solo',
             daily: null,
+            weekly: null,
             challenge: null,
             duel:
               players && players.length >= 2
@@ -410,6 +466,7 @@ export const useSession = create<SessionState>()(
             ai: null,
             mode: 'solo',
             daily: null,
+            weekly: null,
             challenge: { name: p.n, score: p.sc, attempts: p.at, outcome: p.o },
             duel: null,
             error: null,
@@ -432,12 +489,39 @@ export const useSession = create<SessionState>()(
             ai: null,
             mode: 'solo',
             daily: dateKey,
+            weekly: null,
             challenge: null,
             duel: null,
             error: null,
             recorded: false,
             lastXp: null,
           });
+          return true;
+        },
+
+        startWeekly: (index) => {
+          const weekKey = utcWeekKey();
+          const played = useProfile.getState().weeklyResults[weekKey]?.scores?.[index];
+          if (played !== null && played !== undefined) return false; // one shot per slot
+          const { games } = weeklyGauntlet(weekKey);
+          const def = games[index];
+          if (!def) return false;
+          const now = Date.now();
+          const game = createGame(def, weeklySeed(weekKey, index), now);
+          set({
+            def,
+            game,
+            ai: null,
+            mode: 'solo',
+            daily: null,
+            weekly: { weekKey, index },
+            challenge: null,
+            duel: null,
+            error: null,
+            recorded: false,
+            lastXp: null,
+          });
+          track('weekly_started', { weekKey, index, mechanic: def.mechanic });
           return true;
         },
 
@@ -495,7 +579,7 @@ export const useSession = create<SessionState>()(
         },
 
         clear: () =>
-          set({ def: null, game: null, ai: null, mode: 'solo', daily: null, challenge: null, duel: null, error: null, recorded: false, lastXp: null }),
+          set({ def: null, game: null, ai: null, mode: 'solo', daily: null, weekly: null, challenge: null, duel: null, error: null, recorded: false, lastXp: null }),
       };
     },
     { name: 'guessit-session' },

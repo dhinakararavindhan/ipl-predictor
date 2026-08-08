@@ -7,7 +7,7 @@ workspace is the MVP implementation.
 guess-it/
   packages/
     engine/    Deterministic game engine (TS reference impl of docs/game-engine-spec.md) + tests
-    content/   Seed content: 143 published game definitions across 5 worlds + daily challenge
+    content/   Seed content: 160 published game definitions across 5 worlds + daily challenge
   apps/
     web/       Next.js 16 web app — installable PWA, all 4 live mechanics, AI battles,
                challenge links, daily, profile
@@ -62,7 +62,7 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
 - **Mechanics:** Crack the Code (5-digit), Clue Guess, Higher/Lower, Quick Pick (multiple choice).
   Image Reveal is engine-complete but content-gated until a licensed image library exists
   (Content Model §4).
-- **Worlds:** Actors, Movies, Heroes, Numbers, Anything (chaos mode).
+- **Worlds:** Actors, Movies, Heroes, Numbers, Emoji Riddles, Anything (chaos mode).
 - **AI Battle:** Detective / Calculator / Machine at Rookie→Hard — candidate-elimination play for
   the code game, clue-by-clue solve rolls for knowledge games, human-paced thinking, post-game
   "how it solved it" replay.

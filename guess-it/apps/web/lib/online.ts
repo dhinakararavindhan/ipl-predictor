@@ -7,6 +7,7 @@
 import { create } from 'zustand';
 import type { Difficulty, Mechanic, PlayerView } from '@guess-it/engine';
 import { track } from './analytics';
+import { useProfile } from './store';
 
 export const REALTIME_URL =
   process.env.NEXT_PUBLIC_REALTIME_URL ??
@@ -117,10 +118,33 @@ export const useOnline = create<OnlineState>((set, get) => {
         case 'opponent':
           set({ opponent: m.progress });
           break;
-        case 'game_over':
+        case 'game_over': {
           track('race_finished', { outcome: m.outcome, mechanic: m.view.mechanic });
+          // record the race in the local profile (history, streak, Duelist achievement)
+          const raceWon = m.outcome === 'WIN' || m.outcome === 'WALKOVER';
+          const v = m.view as PlayerView;
+          useProfile.getState().recordResult(
+            {
+              id: `race-${Date.now()}`,
+              defId: v.defId,
+              world: v.world,
+              mechanic: v.mechanic,
+              difficulty: v.difficulty,
+              mode: 'race',
+              outcome: raceWon ? 'WON' : 'LOST',
+              answerName: v.result?.answerName ?? '?',
+              score: m.you.score,
+              xp: raceWon ? 150 : 0,
+              attemptsUsed: m.you.attemptsUsed,
+              durationMs: v.result?.durationMs ?? 0,
+              endedAt: Date.now(),
+              opponentName: m.opponent.name,
+            },
+            { clueWin: false, numberWin: false, perfect: false, raceWin: raceWon },
+          );
           set({ phase: 'over', gameOver: m, view: m.view });
           break;
+        }
         case 'opponent_left':
           fail('Your opponent left the room.');
           break;

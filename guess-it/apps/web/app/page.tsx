@@ -61,6 +61,20 @@ export default function Home() {
         </span>
       </Link>
 
+      {/* Weekly Gauntlet */}
+      <Link href="/weekly" className="card flex items-center gap-3 p-4">
+        <span className="text-2xl">🏁</span>
+        <span className="flex-1">
+          <span className="block font-bold">Weekly Gauntlet</span>
+          <span className="block text-xs" style={{ color: 'var(--text-dim)' }}>
+            7 games · one total · resets Monday
+          </span>
+        </span>
+        <span className="text-xs" style={{ color: 'var(--accent)' }}>
+          →
+        </span>
+      </Link>
+
       {/* Modes */}
       <div className="grid grid-cols-2 gap-3">
         <Link href="/play?mode=vs_ai" className="card p-4">

@@ -161,11 +161,11 @@ export function PlayScreen({
           {effectiveMode === 'vs_ai' && (
             <View style={{ gap: 8 }}>
               <Text style={s.label}>OPPONENT</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {AI_CHARACTERS.map((c) => (
                   <Card
                     key={c.id}
-                    style={{ flex: 1, padding: 10, alignItems: 'center' }}
+                    style={{ minWidth: '30%' as unknown as number, flexGrow: 1, padding: 10, alignItems: 'center' }}
                     active={aiCharacter === c.id}
                     onPress={() => setAiCharacter(c.id)}
                   >

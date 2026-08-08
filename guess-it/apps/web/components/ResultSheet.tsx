@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { AiRuntime, GameResult } from '@guess-it/engine';
 import { getCharacter } from '@guess-it/engine';
-import { ACHIEVEMENTS, useProfile } from '@/lib/store';
+import { MECHANIC_META } from '@guess-it/content';
+import { challengeUrl, emojiGrid } from '@/lib/challenge';
+import { ACHIEVEMENTS, useProfile, useSession } from '@/lib/store';
 
 export function ResultSheet({
   result,
@@ -22,9 +24,48 @@ export function ResultSheet({
 }) {
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showAiLog, setShowAiLog] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
   const profile = useProfile();
+  const session = useSession();
   const won = result.outcome === 'WON';
   const unlocked = ACHIEVEMENTS.filter((a) => profile.newlyUnlocked.includes(a.key));
+  const challenge = session.challenge;
+
+  const copy = async (text: string, label: string) => {
+    try {
+      if (navigator.share && /Mobi/i.test(navigator.userAgent)) {
+        await navigator.share({ text });
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setCopied(label);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {
+      /* user cancelled share sheet */
+    }
+  };
+
+  const shareResult = () => {
+    if (!session.game) return;
+    copy(emojiGrid(session.game, MECHANIC_META[session.game.mechanic].name), 'Result copied!');
+  };
+
+  const shareChallenge = () => {
+    const { game, def } = session;
+    if (!game || !def) return;
+    const url = challengeUrl({
+      v: 1,
+      d: def.id,
+      w: game.world,
+      df: game.difficulty,
+      s: game.seed,
+      n: profile.username,
+      sc: result.score,
+      at: result.attemptsUsed,
+      o: result.outcome,
+    });
+    copy(`Can you beat me at GUESS IT? I scored ${result.score} 🔥\n${url}`, 'Challenge link copied!');
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
@@ -87,6 +128,26 @@ export function ResultSheet({
           </p>
         )}
 
+        {/* head-to-head when this game came from a challenge link */}
+        {challenge && (
+          <div className="card-2 mt-3 p-3 text-center">
+            <p className="text-[10px] font-bold tracking-widest" style={{ color: 'var(--text-dim)' }}>
+              HEAD TO HEAD
+            </p>
+            <p className="mt-1 text-sm">
+              You <b className="digits">{result.score}</b> · {challenge.name}{' '}
+              <b className="digits">{challenge.score}</b>
+            </p>
+            <p className="mt-1 text-sm font-bold" style={{ color: result.score >= challenge.score ? 'var(--accent-2)' : 'var(--danger)' }}>
+              {result.score > challenge.score
+                ? '🏆 You win the duel!'
+                : result.score === challenge.score
+                  ? '🤝 Dead heat!'
+                  : `${challenge.name} takes it.`}
+            </p>
+          </div>
+        )}
+
         {unlocked.length > 0 && (
           <div className="mt-3 flex flex-col items-center gap-1">
             {unlocked.map((a) => (
@@ -146,7 +207,22 @@ export function ResultSheet({
           </>
         )}
 
-        <div className="mt-5 flex gap-2">
+        {/* share (BRD §27, §64) */}
+        <div className="mt-4 flex gap-2">
+          <button className="btn btn-ghost flex-1 py-2.5 text-xs font-bold" onClick={shareResult}>
+            📋 Copy result
+          </button>
+          <button className="btn btn-ghost flex-1 py-2.5 text-xs font-bold" onClick={shareChallenge}>
+            ⚔️ Challenge a friend
+          </button>
+        </div>
+        {copied && (
+          <p className="pop-in mt-2 text-center text-xs font-bold" style={{ color: 'var(--accent-2)' }}>
+            ✓ {copied}
+          </p>
+        )}
+
+        <div className="mt-3 flex gap-2">
           {!daily && (
             <button className="btn btn-primary flex-1 py-3 text-sm font-bold" onClick={onPlayAgain}>
               PLAY AGAIN

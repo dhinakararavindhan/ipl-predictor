@@ -63,6 +63,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'detective', name: 'Detective', emoji: '🕵️', blurb: 'Solve 10 clue games' },
   { key: 'number_wizard', name: 'Number Wizard', emoji: '🧙', blurb: 'Win 10 number games' },
   { key: 'perfect', name: 'Perfect', emoji: '💎', blurb: 'Win without hints or wrong guesses' },
+  { key: 'lightning', name: 'Lightning', emoji: '⚡', blurb: 'Win in under 30 seconds' },
   { key: 'streak_master', name: 'Streak Master', emoji: '🔥', blurb: 'Reach a 7-day streak' },
   { key: 'legend', name: 'Legend', emoji: '👑', blurb: 'Win 100 games' },
 ];
@@ -156,6 +157,7 @@ export const useProfile = create<ProfileState>()(
         grant('detective', clueWins >= 10);
         grant('number_wizard', numberWins >= 10);
         grant('perfect', won && opts.perfect);
+        grant('lightning', won && entry.durationMs <= 30000);
         grant('streak_master', streak.current >= 7);
         grant('legend', wins >= 100);
 

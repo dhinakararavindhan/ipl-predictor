@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import Link from 'next/link';
 import './globals.css';
+import { SwRegister } from '@/components/SwRegister';
 
 export const metadata: Metadata = {
   title: 'GUESS IT — Think. Guess. Outsmart.',
   description:
     'The universal guessing game. Actors, movies, heroes, numbers, anything — crack it with clues, codes and deduction against AI opponents.',
+  appleWebApp: { capable: true, title: 'GUESS IT', statusBarStyle: 'black-translucent' },
+  icons: { apple: '/apple-touch-icon.png' },
 };
 
 export const viewport: Viewport = {
@@ -16,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="min-h-screen">
+        <SwRegister />
         <div className="mx-auto flex min-h-screen w-full max-w-[520px] flex-col px-4 pb-24">
           {children}
         </div>

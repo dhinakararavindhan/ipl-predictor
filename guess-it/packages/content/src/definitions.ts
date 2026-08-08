@@ -6,54 +6,8 @@
  * images exist (Content Model §4) — no image cells are published here.
  */
 import type { GameDefinition } from '@guess-it/engine';
-
-const clue = (
-  id: string,
-  world: string,
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD',
-  name: string,
-  aliases: string[],
-  emoji: string,
-  clues: [string, number][],
-): GameDefinition => ({
-  id,
-  mechanic: 'CLUE_GUESS',
-  world,
-  difficulty,
-  answer: { name, aliases, emoji },
-  clue: { clues: clues.map(([text, identifiability]) => ({ text, identifiability })) },
-});
-
-const hl = (
-  id: string,
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD',
-  prompt: string,
-  secret: number,
-  lo: number,
-  hi: number,
-  unit?: string,
-): GameDefinition => ({
-  id,
-  mechanic: 'HIGHER_LOWER',
-  world: 'numbers',
-  difficulty,
-  higherLower: { secret, lo, hi, unit, prompt },
-});
-
-const mc = (
-  id: string,
-  world: string,
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD',
-  question: string,
-  options: string[],
-  correctIndex: number,
-): GameDefinition => ({
-  id,
-  mechanic: 'MULTIPLE_CHOICE',
-  world,
-  difficulty,
-  multipleChoice: { question, options, correctIndex },
-});
+import { clue, hl, mc } from './builders';
+import { WAVE2 } from './definitions-wave2';
 
 // ---------------- ACTORS — Clue Guess ----------------
 
@@ -377,4 +331,5 @@ export const DEFINITIONS: GameDefinition[] = [
   ...numberHL,
   ...mcDefs,
   ...chaosClues,
+  ...WAVE2,
 ];

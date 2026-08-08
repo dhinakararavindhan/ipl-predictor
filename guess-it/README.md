@@ -7,11 +7,15 @@ workspace is the MVP implementation.
 guess-it/
   packages/
     engine/    Deterministic game engine (TS reference impl of docs/game-engine-spec.md) + tests
-    content/   Seed content: 80 published game definitions across 5 worlds + daily challenge
+    content/   Seed content: 143 published game definitions across 5 worlds + daily challenge
   apps/
-    web/       Next.js 16 web app (dark-first, all 4 live mechanics, AI battles, daily, profile)
+    web/       Next.js 16 web app — installable PWA, all 4 live mechanics, AI battles,
+               challenge links, daily, profile
     mobile/    Expo SDK 57 app — Android + iOS, same engine and content
 ```
+
+CI: `.github/workflows/guess-it-ci.yml` runs engine tests + typecheck, the web production
+build, and the mobile typecheck + Android bundle on every push/PR touching `guess-it/`.
 
 ## Run the web app
 
@@ -21,6 +25,12 @@ npm install
 npm run dev        # http://localhost:3100
 npm run build      # production build
 ```
+
+### Install it like an app (PWA)
+
+The web app is a full PWA: open it on any Android phone (or desktop Chrome) and use
+**Add to Home Screen** — you get a standalone, offline-capable app with the GUESS IT icon,
+no store or APK needed. iPhones: Share → Add to Home Screen in Safari.
 
 ## Run the Android app
 
@@ -60,6 +70,11 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
   breakdowns.
 - **Daily Mystery:** deterministic shared puzzle rotating at 00:00 UTC — same answer for every
   player with no server required.
+- **Challenge links (web):** ⚔️ "Challenge a friend" on any result copies a link that makes the
+  recipient play the *exact same puzzle* (same seed); when they finish they see the head-to-head.
+  Plus Wordle-style spoiler-free emoji result sharing. Backend-free preview of API Spec §6.
+- **Achievements:** First Guess, Code Breaker, Detective, Number Wizard, Perfect, Lightning,
+  Streak Master, Legend.
 - **Privacy:** everything stored locally (localStorage / AsyncStorage); export + delete built in.
 
 ## Known deviations from the spec set (intentional, tracked)

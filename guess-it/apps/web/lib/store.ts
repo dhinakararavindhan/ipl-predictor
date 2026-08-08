@@ -34,7 +34,8 @@ import {
   type HintType,
   type Mechanic,
 } from '@guess-it/engine';
-import { dailyChallenge, dailySeed, pickDefinition, utcDateKey } from '@guess-it/content';
+import { dailyChallenge, dailySeed, getDefinition, pickDefinition, utcDateKey } from '@guess-it/content';
+import type { ChallengePayload } from './challenge';
 
 // ---------------- profile ----------------
 
@@ -70,6 +71,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'detective', name: 'Detective', emoji: '🕵️', blurb: 'Solve 10 clue games' },
   { key: 'number_wizard', name: 'Number Wizard', emoji: '🧙', blurb: 'Win 10 number games' },
   { key: 'perfect', name: 'Perfect', emoji: '💎', blurb: 'Win without hints or wrong guesses' },
+  { key: 'lightning', name: 'Lightning', emoji: '⚡', blurb: 'Win in under 30 seconds' },
   { key: 'streak_master', name: 'Streak Master', emoji: '🔥', blurb: 'Reach a 7-day streak' },
   { key: 'legend', name: 'Legend', emoji: '👑', blurb: 'Win 100 games' },
 ];
@@ -159,6 +161,7 @@ export const useProfile = create<ProfileState>()(
         grant('detective', clueWins >= 10);
         grant('number_wizard', numberWins >= 10);
         grant('perfect', won && opts.perfect);
+        grant('lightning', won && entry.durationMs <= 30000);
         grant('streak_master', streak.current >= 7);
         grant('legend', wins >= 100);
 
@@ -218,12 +221,20 @@ export interface StartConfig {
   daily?: boolean;
 }
 
+export interface ChallengeContext {
+  name: string;
+  score: number;
+  attempts: number;
+  outcome: 'WON' | 'LOST' | 'FORFEITED';
+}
+
 interface SessionState {
   def: GameDefinition | null;
   game: GameState | null;
   ai: AiRuntime | null;
   mode: 'solo' | 'vs_ai';
   daily: string | null;
+  challenge: ChallengeContext | null;
   error: string | null;
   errorNonce: number;
   recorded: boolean;
@@ -231,6 +242,7 @@ interface SessionState {
 
   start: (config: StartConfig) => boolean;
   startDaily: () => boolean;
+  startChallenge: (p: ChallengePayload) => 'ok' | 'played' | 'invalid';
   guess: (text: string) => void;
   hint: (type: HintType) => void;
   advance: () => void;
@@ -306,6 +318,7 @@ export const useSession = create<SessionState>()(
         ai: null,
         mode: 'solo',
         daily: null,
+        challenge: null,
         error: null,
         errorNonce: 0,
         recorded: false,
@@ -334,11 +347,33 @@ export const useSession = create<SessionState>()(
             ai,
             mode: versus ? 'vs_ai' : 'solo',
             daily: null,
+            challenge: null,
             error: null,
             recorded: false,
             lastXp: null,
           });
           return true;
+        },
+
+        startChallenge: (p) => {
+          const def = getDefinition(p.d, p.w, p.df);
+          if (!def) return 'invalid';
+          // one play per challenge seed (PRD GI-7.1)
+          if (useProfile.getState().history.some((h) => h.id === p.s)) return 'played';
+          const now = Date.now();
+          const game = createGame(def, p.s, now);
+          set({
+            def,
+            game,
+            ai: null,
+            mode: 'solo',
+            daily: null,
+            challenge: { name: p.n, score: p.sc, attempts: p.at, outcome: p.o },
+            error: null,
+            recorded: false,
+            lastXp: null,
+          });
+          return 'ok';
         },
 
         startDaily: () => {
@@ -353,6 +388,7 @@ export const useSession = create<SessionState>()(
             ai: null,
             mode: 'solo',
             daily: dateKey,
+            challenge: null,
             error: null,
             recorded: false,
             lastXp: null,
@@ -387,7 +423,7 @@ export const useSession = create<SessionState>()(
         },
 
         clear: () =>
-          set({ def: null, game: null, ai: null, mode: 'solo', daily: null, error: null, recorded: false, lastXp: null }),
+          set({ def: null, game: null, ai: null, mode: 'solo', daily: null, challenge: null, error: null, recorded: false, lastXp: null }),
       };
     },
     { name: 'guessit-session' },

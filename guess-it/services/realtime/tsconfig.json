@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "paths": {
+      "@guess-it/engine": ["../../packages/engine/src/index.ts"],
+      "@guess-it/content": ["../../packages/content/src/index.ts"]
+    }
+  },
+  "include": ["src", "test", "../../packages/engine/src/**/*.ts", "../../packages/content/src/**/*.ts"]
+}

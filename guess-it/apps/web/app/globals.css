@@ -1,0 +1,206 @@
+@import 'tailwindcss';
+
+/* GUESS IT design tokens — UI/UX Spec §1.1 (dark-first) */
+:root {
+  --bg: #0b0e14;
+  --surface: #131826;
+  --surface-2: #1c2333;
+  --text: #f2f5fa;
+  --text-dim: #8a93a6;
+  --accent: #6c5ce7;
+  --accent-deep: #4834b8;
+  --accent-2: #00d2a8;
+  --warn: #ffb020;
+  --danger: #ff5c7a;
+  --info: #4da3ff;
+  --border: rgba(255, 255, 255, 0.07);
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  min-height: 100%;
+}
+
+/* ambient game-world glow */
+body {
+  background-image:
+    radial-gradient(60% 40% at 15% -5%, rgba(108, 92, 231, 0.16), transparent 70%),
+    radial-gradient(50% 35% at 100% 0%, rgba(0, 210, 168, 0.07), transparent 70%),
+    radial-gradient(70% 50% at 50% 110%, rgba(108, 92, 231, 0.1), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* type system: display for headlines, mono for digits, body everywhere else */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.digits {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+.brand-gradient {
+  background: linear-gradient(100deg, #a89bff 0%, var(--accent) 45%, var(--accent-2) 110%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 45%), var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+@media (hover: hover) {
+  a.card:hover,
+  button.card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(108, 92, 231, 0.45);
+    box-shadow: 0 8px 30px rgba(108, 92, 231, 0.12);
+  }
+}
+
+.card-2 {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.btn {
+  border-radius: 14px;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.btn:active {
+  transform: scale(0.96);
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(108, 92, 231, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.btn-primary:hover {
+  box-shadow: 0 6px 28px rgba(108, 92, 231, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.btn-ghost {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover {
+  background: #232b3f;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.chip {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-family: var(--font-display), system-ui, sans-serif;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+.chip[data-active='true'] {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border-color: var(--accent);
+  color: white;
+  box-shadow: 0 2px 14px rgba(108, 92, 231, 0.4);
+}
+
+input.card-2:focus,
+input.card:focus {
+  border-color: rgba(108, 92, 231, 0.6);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.pop-in {
+  animation: pop-in 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+.shake {
+  animation: shake 0.2s ease-in-out 2;
+}
+
+@keyframes slide-up {
+  0% { transform: translateY(100%); }
+  100% { transform: translateY(0); }
+}
+.slide-up {
+  animation: slide-up 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes flame-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+.flame-pulse {
+  animation: flame-pulse 1.2s ease-in-out infinite;
+}
+
+/* digit flip reveal (UI/UX §1.4) */
+@keyframes flip-in {
+  0% { transform: rotateX(90deg); opacity: 0; }
+  100% { transform: rotateX(0); opacity: 1; }
+}
+.flip-in {
+  animation: flip-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* win confetti (pure CSS, UI/UX §1.4: burst ≤ 1.5 s) */
+@keyframes confetti-fall {
+  0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+.confetti {
+  position: fixed;
+  top: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 60;
+  animation: confetti-fall 1.4s ease-in both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop-in, .shake, .slide-up, .flame-pulse, .flip-in, .confetti {
+    animation: none;
+  }
+  .confetti {
+    display: none;
+  }
+}

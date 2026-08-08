@@ -1,0 +1,13 @@
+# Render.com blueprint — free tier works for the beta.
+# In the Render dashboard: New → Blueprint → point at this repo.
+services:
+  - type: web
+    name: guessit-realtime
+    runtime: docker
+    rootDir: guess-it
+    dockerfilePath: services/realtime/Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8787

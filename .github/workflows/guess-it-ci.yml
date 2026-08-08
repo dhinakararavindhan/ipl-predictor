@@ -1,0 +1,61 @@
+name: guess-it-ci
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['guess-it/**', '.github/workflows/guess-it-ci.yml']
+  pull_request:
+    paths: ['guess-it/**', '.github/workflows/guess-it-ci.yml']
+
+jobs:
+  engine:
+    name: Engine tests + typecheck
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: guess-it/packages/engine }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: guess-it/packages/engine/package-lock.json }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+
+  web:
+    name: Web build
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: guess-it/apps/web }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: guess-it/apps/web/package-lock.json }
+      - run: npm ci
+      - run: npm run build
+
+  realtime:
+    name: Realtime server tests
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: guess-it/services/realtime }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit
+      - run: npm test
+
+  mobile:
+    name: Mobile typecheck + Android bundle
+    runs-on: ubuntu-latest
+    defaults:
+      run: { working-directory: guess-it/apps/mobile }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: guess-it/apps/mobile/package-lock.json }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx expo export --platform android
+        env: { EXPO_NO_TELEMETRY: '1' }

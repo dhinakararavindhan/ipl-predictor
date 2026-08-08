@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# guess-it workspace
+guess-it/**/node_modules/
+guess-it/**/.next/
+guess-it/**/.expo/
+guess-it/**/*.tsbuildinfo

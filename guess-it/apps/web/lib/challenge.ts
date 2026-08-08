@@ -45,7 +45,8 @@ export function decodeChallenge(c: string): ChallengePayload | null {
 }
 
 export function challengeUrl(p: ChallengePayload): string {
-  return `${window.location.origin}/challenge?c=${encodeChallenge(p)}`;
+  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+  return `${window.location.origin}${base}/challenge/?c=${encodeChallenge(p)}`;
 }
 
 /** Wordle-style spoiler-free result text (UI/UX §4). */

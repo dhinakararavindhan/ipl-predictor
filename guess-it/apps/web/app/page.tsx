@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { WORLDS } from '@guess-it/content';
 import { utcDateKey } from '@guess-it/content';
 import { playerLevel, useProfile } from '@/lib/store';
+import { InstallPrompt } from '@/components/InstallPrompt';
 
 function salutation(): string {
   const h = new Date().getHours();
@@ -42,6 +43,8 @@ export default function Home() {
           </p>
         )}
       </header>
+
+      {mounted && <InstallPrompt />}
 
       {/* Daily Mystery */}
       <Link href="/daily" className="card pop-in block p-6 text-center" style={{ borderColor: 'var(--accent)' }}>

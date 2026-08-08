@@ -1,8 +1,21 @@
-# GUESS IT realtime server — live friend races
+# GUESS IT backend — races, identity, global daily leaderboard
 
-Server-authoritative WebSocket server for two-phone live racing. In-memory rooms,
-**no database required**. Reuses `@guess-it/engine` directly, so game rules here are the same
-28-test-covered engine the apps use — clients only ever receive `PlayerView` (no answers leak).
+One deployable service, three jobs — all server-authoritative via `@guess-it/engine`
+(clients only ever receive `PlayerView`; there is no score-submission endpoint):
+
+- **Live friend races** — WebSocket rooms (`/ws`), in-memory, no database needed
+- **Guest identity** — `POST /api/players` issues a player id + HMAC-signed token (no PII)
+- **Global Daily Mystery** — `POST /api/daily/start` + `/api/daily/action` run the daily
+  through the server engine; finishing persists the score; `GET /api/daily/leaderboard`
+  serves the worldwide top 50 + your rank. One play per player per UTC day, enforced
+  server-side and surviving restarts.
+
+**Storage** is pluggable (`src/storage.ts`): set `DATABASE_URL` (any Postgres — Neon and
+Supabase free tiers work) for real persistence with the schema auto-created, or run with
+zero config and scores persist to a JSON file under `DATA_DIR` (fine for beta; resets when
+the host rebuilds the instance). Both implementations pass the same test suite.
+
+Set `AUTH_SECRET` in production so player tokens survive restarts (render.yaml generates one).
 
 ## Architecture note (deviation from docs/architecture.md, intentional)
 

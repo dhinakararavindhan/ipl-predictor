@@ -8,6 +8,9 @@ guess-it/
   packages/
     engine/    Deterministic game engine (TS reference impl of docs/game-engine-spec.md) + tests
     content/   Seed content: 160 published game definitions across 5 worlds + daily challenge
+  services/
+    realtime/  Backend: live races (WS) + guest identity + server-authoritative global
+               daily leaderboard (REST). Pluggable storage: JSON file or Postgres.
   apps/
     web/       Next.js 16 web app — installable PWA, all 4 live mechanics, AI battles,
                challenge links, daily, profile
@@ -68,8 +71,10 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
   "how it solved it" replay.
 - **Progression:** XP + levels, daily streaks, achievements, game history, profile, score
   breakdowns.
-- **Daily Mystery:** deterministic shared puzzle rotating at 00:00 UTC — same answer for every
-  player with no server required.
+- **Daily Mystery:** deterministic shared puzzle rotating at 00:00 UTC. With the backend
+  deployed it becomes **server-authoritative with a 🌍 global leaderboard** — the only way
+  onto the board is playing through the server's engine (no score forgery). Without the
+  backend it still works locally.
 - **Multiplayer:**
   - *Pass & Play (web + mobile):* 👥 2–4 players on one device alternate guesses on Crack the
     Code or Higher/Lower — first correct guess wins. Party mode: no hints, no XP, pure bragging

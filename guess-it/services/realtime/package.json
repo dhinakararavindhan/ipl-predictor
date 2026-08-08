@@ -12,11 +12,13 @@
   "dependencies": {
     "@guess-it/content": "file:../../packages/content",
     "@guess-it/engine": "file:../../packages/engine",
+    "pg": "^8.22.0",
     "tsx": "^4.19.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/pg": "^8.21.0",
     "@types/ws": "^8.5.10",
     "typescript": "^5",
     "vitest": "^3.2.0"

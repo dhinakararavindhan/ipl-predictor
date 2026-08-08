@@ -143,6 +143,42 @@ export function RaceClue({
   );
 }
 
+export function RaceQuickPick({ view, onGuess }: { view: PlayerView; onGuess: (presIdx: string) => void }) {
+  const [locked, setLocked] = useState<number | null>(null);
+  const m = view.mc!;
+  const letters = ['A', 'B', 'C', 'D'];
+  return (
+    <div className="flex flex-col gap-4">
+      <p className="text-center text-xs" style={{ color: 'var(--text-dim)' }}>
+        One shot — answer fast for a bigger score.
+      </p>
+      <p className="text-center text-base font-semibold">{m.question}</p>
+      <div className="flex flex-col gap-2">
+        {m.options.map((opt, presIdx) => {
+          const gone = m.eliminated.includes(presIdx);
+          return (
+            <button
+              key={presIdx}
+              className="card p-4 text-left text-sm font-medium transition-opacity disabled:opacity-25"
+              style={locked === presIdx ? { borderColor: 'var(--accent)' } : undefined}
+              disabled={gone || locked !== null}
+              onClick={() => {
+                setLocked(presIdx);
+                onGuess(String(presIdx));
+              }}
+            >
+              <span className="mr-2 font-bold" style={{ color: 'var(--accent)' }}>
+                {letters[presIdx]}
+              </span>
+              {gone ? '—' : opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function RaceHigherLower({ view, onGuess }: { view: PlayerView; onGuess: (g: string) => void }) {
   const [entry, setEntry] = useState('');
   const h = view.hl!;

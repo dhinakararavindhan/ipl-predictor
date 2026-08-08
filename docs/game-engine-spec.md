@@ -3,8 +3,8 @@
 ## GUESS IT — Universal Guessing Game Platform
 
 **Document:** 3 of 11 (see BRD §81)
-**Version:** 0.1 (Draft)
-**Status:** For review
+**Version:** 1.0
+**Status:** Approved for build
 **Scope:** The five MVP mechanics (BRD §65): Exact Number, Clue Guess, Higher/Lower, Image Reveal, Multiple Choice — plus the shared game lifecycle, scoring, hints, difficulty, and AI opponent behavior they build on.
 
 This document is the source of truth for game rules. If the UI, API, or AI disagrees with this document, this document wins. Every numbered rule (`R-x.y`) must have at least one automated test (§11).
@@ -327,9 +327,11 @@ Every `R-` rule above maps to at least one test. Mandatory suites:
 
 ---
 
-## 12. OPEN QUESTIONS
+## 12. RESOLVED DECISIONS (v1.0)
 
-1. Exact Number scoring: is −90/wrong guess the right slope, or should later guesses cost more than early ones (pressure curve)? Needs Phase 0 playtesting.
-2. Clue `identifiability` annotation (R-9.3.1): hand-authored at MVP, or estimated from playtest solve rates?
-3. Higher/Lower on non-uniform real-world numbers (box office, population): keep integer-range mechanic only at MVP, defer "Closest Guess" (BRD §10.7) — confirm.
-4. Should `tick`-based timeouts pause for single-player app-backgrounding on mobile? Proposal: yes for untimed mechanics, no for Multiple Choice.
+| ID | Decision |
+|---|---|
+| **D-12.1** | Exact Number keeps the **flat −90/wrong-guess** slope at launch. A pressure-curve variant is validated as a beta experiment (Beta & Launch Plan §4.2); any change ships as a `rule_config_version` bump (R-6.3.3), never a retro-rescore. |
+| **D-12.2** | Clue `identifiability` is **hand-authored at MVP** using the Content Model §5.3 rubric; solve-rate estimation replaces it in Phase 4 when play volume exists. |
+| **D-12.3** | Higher/Lower ships **integer-range only**; "Closest Guess" (BRD §10.7) is deferred to Phase 3 multiplayer, where it naturally belongs. |
+| **D-12.4** | Mobile app-backgrounding **pauses nothing with a timer** (Multiple Choice runs on), and untimed mechanics have nothing to pause; the R-3.5 24 h abandonment sweep is the only clock on them. Simplest honest rule. |

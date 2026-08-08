@@ -3,8 +3,8 @@
 ## GUESS IT — Universal Guessing Game Platform
 
 **Document:** 2 of 11 (see BRD §81)
-**Version:** 0.1 (Draft)
-**Status:** For review
+**Version:** 1.0
+**Status:** Approved for build
 **Scope:** MVP launch scope per BRD §65–§67, plus Friend Challenge (BRD §68) as a fast-follow. Everything else is explicitly out of scope for this document version.
 
 This PRD translates the BRD (`docs/BRD.md`) into screens, features, user stories, and acceptance criteria. Exact game rules, scoring math, and AI behavior live in `docs/game-engine-spec.md` — this document references them, never redefines them.
@@ -141,7 +141,7 @@ The game screen must always show (BRD §45): the challenge, remaining attempts, 
 
 - Completing any game (win or lose) preserves the streak for that calendar day in the player's local timezone.
 - The streak counter and next milestone (BRD §21) are visible on Home.
-- One "streak freeze" is earned per 7-day streak (design lever; confirm in review).
+- Streak freezes are deferred to Phase 3 (decision D-8.1) — MVP streaks are simple and honest: play any game that day or the streak resets.
 
 ### 4.6 Daily Challenge
 
@@ -225,10 +225,12 @@ MVP ships when every item in BRD §74 is demonstrably true, plus:
 
 ---
 
-## 8. OPEN QUESTIONS (to resolve before Sprint 3)
+## 8. RESOLVED DECISIONS (v1.0)
 
-1. Streak freeze (GI-5.2): include at MVP or defer?
-2. Daily Challenge rollover: 00:00 UTC vs. local midnight — UTC is simpler and keeps one shared board; confirm.
-3. Type-ahead answer namespace for Clue/Image games: curated per-world list (recommended) vs. free text with fuzzy matching.
-4. Guest identity persistence on web (localStorage) — acceptable loss risk vs. forcing earlier sign-up?
-5. Minimum content bar per world × mechanic × difficulty cell before a cell is playable (proposal: 10 games per cell).
+| ID | Decision |
+|---|---|
+| **D-8.1** | Streak freeze **deferred to Phase 3**. MVP streak = play any game on a local calendar day. |
+| **D-8.2** | Daily Challenge rolls over at **00:00 UTC** (one shared board worldwide). Streak days remain local-timezone — two intentionally different clocks (Architecture §4). |
+| **D-8.3** | Clue/Image guesses use a **curated per-world type-ahead namespace** (Content Model §5.4); free text still accepted and matched server-side via aliases (Engine R-4.2–R-4.3). |
+| **D-8.4** | Web guest identity persists in **localStorage** — accepted loss risk; mitigated by the upgrade prompt after first win (GI-1.2) and SecureStore on mobile. |
+| **D-8.5** | A world × mechanic × difficulty cell is playable at **≥ 10 published games** (≥ 3 per difficulty); Anything world requires a union pool ≥ 50 (Content Model §3). |

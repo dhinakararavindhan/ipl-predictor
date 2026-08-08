@@ -79,6 +79,9 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
 
 ## Known deviations from the spec set (intentional, tracked)
 
+0. **Challenge links are decodable** — the lite challenge link carries the puzzle id + seed
+   client-side, so a determined friend could peek. Accepted for the friendly preview; the
+   server-issued version (API Spec §6) replaces it when the backend lands.
 1. **Client-side engine** — Engine Spec R-1.3 requires server authority; this MVP has no backend
    yet, so the reference engine runs on-device and no shared leaderboards exist. Server authority
    activates with `services/api` (Development Plan Sprint 4+); the engine's PlayerView/FullState

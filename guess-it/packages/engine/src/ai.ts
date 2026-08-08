@@ -280,3 +280,12 @@ export function runAi(
 export function supportsVersus(mechanic: GameState['mechanic']): boolean {
   return mechanic === 'EXACT_NUMBER' || mechanic === 'CLUE_GUESS' || mechanic === 'IMAGE_REVEAL';
 }
+
+/**
+ * Which mechanics support same-device Pass & Play duels. Only mechanics whose
+ * feedback is shared knowledge work hotseat — clue/image answers would spoil
+ * for the next player.
+ */
+export function supportsDuel(mechanic: GameState['mechanic']): boolean {
+  return mechanic === 'EXACT_NUMBER' || mechanic === 'HIGHER_LOWER';
+}

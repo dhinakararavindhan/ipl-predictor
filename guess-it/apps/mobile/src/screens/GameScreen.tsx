@@ -399,6 +399,18 @@ export function GameScreen({ onExit, onPlayAgain }: { onExit: () => void; onPlay
           </View>
         )}
 
+        {/* pass & play turn banner */}
+        {session.duel && active && (
+          <View style={[s.card2, { paddingHorizontal: 14, paddingVertical: 10, alignItems: 'center', borderColor: C.accent }]}>
+            <Text style={[s.body, { fontWeight: '700' }]}>
+              🎯 {session.duel.players[session.duel.current]}&apos;s turn
+            </Text>
+            <Text style={[s.dim, { fontSize: 11 }]}>
+              {session.duel.players.map((p, i) => `${p}: ${session.duel!.guessCounts[i]}`).join(' · ')} guesses — first correct wins
+            </Text>
+          </View>
+        )}
+
         {/* opponent */}
         {ai && char && (
           <View style={[s.card2, { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10 }]}>
@@ -426,8 +438,8 @@ export function GameScreen({ onExit, onPlayAgain }: { onExit: () => void; onPlay
           {game.mechanic === 'MULTIPLE_CHOICE' && <MultipleChoiceBody game={game} def={def} onGuess={session.guess} />}
         </View>
 
-        {/* hint */}
-        {active && hint && game.hintsRemaining > 0 && (
+        {/* hint (disabled in Pass & Play) */}
+        {active && hint && game.hintsRemaining > 0 && !session.duel && (
           <Btn
             title={`💡 ${hint.label} (−${hint.cost} pts) · ${game.hintsRemaining} left`}
             kind="ghost"
@@ -469,7 +481,21 @@ export function GameScreen({ onExit, onPlayAgain }: { onExit: () => void; onPlay
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' }}>
           {result && (
             <View style={[s.card, { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, padding: 22, paddingBottom: 40 }]}>
-              {result.outcome === 'WON' ? (
+              {session.duel ? (
+                <>
+                  <Text style={{ fontSize: 36, textAlign: 'center' }}>
+                    {session.duel.winnerIndex !== null ? '🏆' : '🤝'}
+                  </Text>
+                  <Text style={[s.h1, { textAlign: 'center', fontSize: 22 }]}>
+                    {session.duel.winnerIndex !== null
+                      ? `${session.duel.players[session.duel.winnerIndex].toUpperCase()} CRACKED IT!`
+                      : 'THE PUZZLE WINS'}
+                  </Text>
+                  <Text style={[s.dim, { textAlign: 'center', marginTop: 4, fontSize: 11 }]}>
+                    {session.duel.players.map((p, i) => `${p}: ${session.duel!.guessCounts[i]} guesses`).join(' · ')}
+                  </Text>
+                </>
+              ) : result.outcome === 'WON' ? (
                 <>
                   <Text style={{ fontSize: 36, textAlign: 'center' }}>🎉</Text>
                   <Text style={[s.h1, { textAlign: 'center', fontSize: 22 }]}>YOU CRACKED IT!</Text>

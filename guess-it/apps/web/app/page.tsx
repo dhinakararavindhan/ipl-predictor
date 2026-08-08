@@ -76,23 +76,26 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* Coming soon */}
+      {/* Multiplayer */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="card p-4 opacity-50">
-          <p className="text-2xl">⚔️</p>
-          <p className="mt-1 font-bold">Challenge a Friend</p>
+        <Link href="/play?mode=duel" className="card p-4">
+          <p className="text-2xl">👥</p>
+          <p className="mt-1 font-bold">Pass &amp; Play</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
-            Coming in Phase 2
+            Duel friends on one phone
           </p>
-        </div>
+        </Link>
         <div className="card p-4 opacity-50">
           <p className="text-2xl">🌎</p>
           <p className="mt-1 font-bold">Quick Match</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
-            Coming in Phase 2
+            Online — coming in Phase 2
           </p>
         </div>
       </div>
+      <p className="-mt-1 text-center text-[11px]" style={{ color: 'var(--text-dim)' }}>
+        ⚔️ Tip: finish any game and tap “Challenge a friend” to send them the same puzzle.
+      </p>
 
       {/* Explore */}
       <section>

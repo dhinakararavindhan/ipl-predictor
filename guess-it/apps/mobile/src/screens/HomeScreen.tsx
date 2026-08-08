@@ -8,7 +8,7 @@ export function HomeScreen({
   onPlay,
   onDaily,
 }: {
-  onPlay: (world?: string, versus?: boolean) => void;
+  onPlay: (world?: string, mode?: 'vs_ai' | 'duel') => void;
   onDaily: () => void;
 }) {
   const p = useProfile();
@@ -48,7 +48,7 @@ export function HomeScreen({
       </Card>
 
       <View style={{ flexDirection: 'row', gap: 10 }}>
-        <Card style={{ flex: 1 }} onPress={() => onPlay(undefined, true)}>
+        <Card style={{ flex: 1 }} onPress={() => onPlay(undefined, 'vs_ai')}>
           <Text style={{ fontSize: 24 }}>🤖</Text>
           <Text style={[s.body, { fontWeight: '700', marginTop: 4 }]}>AI Battle</Text>
           <Text style={s.dim}>Race an AI mind</Text>
@@ -60,16 +60,16 @@ export function HomeScreen({
         </Card>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 10, opacity: 0.45 }}>
-        <Card style={{ flex: 1 }}>
-          <Text style={{ fontSize: 24 }}>⚔️</Text>
-          <Text style={[s.body, { fontWeight: '700', marginTop: 4 }]}>Friend Challenge</Text>
-          <Text style={s.dim}>Coming in Phase 2</Text>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Card style={{ flex: 1 }} onPress={() => onPlay(undefined, 'duel')}>
+          <Text style={{ fontSize: 24 }}>👥</Text>
+          <Text style={[s.body, { fontWeight: '700', marginTop: 4 }]}>Pass &amp; Play</Text>
+          <Text style={s.dim}>Duel friends on this phone</Text>
         </Card>
-        <Card style={{ flex: 1 }}>
+        <Card style={{ flex: 1, opacity: 0.45 }}>
           <Text style={{ fontSize: 24 }}>🌎</Text>
           <Text style={[s.body, { fontWeight: '700', marginTop: 4 }]}>Quick Match</Text>
-          <Text style={s.dim}>Coming in Phase 2</Text>
+          <Text style={s.dim}>Online — Phase 2</Text>
         </Card>
       </View>
 

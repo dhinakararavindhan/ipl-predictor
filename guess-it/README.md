@@ -70,9 +70,15 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
   breakdowns.
 - **Daily Mystery:** deterministic shared puzzle rotating at 00:00 UTC — same answer for every
   player with no server required.
-- **Challenge links (web):** ⚔️ "Challenge a friend" on any result copies a link that makes the
-  recipient play the *exact same puzzle* (same seed); when they finish they see the head-to-head.
-  Plus Wordle-style spoiler-free emoji result sharing. Backend-free preview of API Spec §6.
+- **Multiplayer:**
+  - *Pass & Play (web + mobile):* 👥 2–4 players on one device alternate guesses on Crack the
+    Code or Higher/Lower — first correct guess wins. Party mode: no hints, no XP, pure bragging
+    rights. (Hotseat is limited to shared-feedback mechanics; clue/image answers would spoil.)
+  - *Challenge links (web):* ⚔️ "Challenge a friend" on any result copies a link that makes the
+    recipient play the *exact same puzzle* (same seed); when they finish they see the
+    head-to-head. Plus Wordle-style spoiler-free emoji result sharing. Backend-free preview of
+    API Spec §6.
+  - *Online quick match / ranked:* Phase 2–3, needs the backend (Architecture §7, API Spec §9).
 - **Achievements:** First Guess, Code Breaker, Detective, Number Wizard, Perfect, Lightning,
   Streak Master, Legend.
 - **Privacy:** everything stored locally (localStorage / AsyncStorage); export + delete built in.

@@ -79,15 +79,15 @@ export default function GamePage() {
 
   const playAgain = () => {
     clearNewlyUnlocked();
-    const cfg = {
+    session.start({
       world: game.world,
       mechanic: game.mechanic,
       difficulty: game.difficulty,
-      mode: (ai ? 'vs_ai' : 'solo') as 'vs_ai' | 'solo',
+      mode: session.duel ? 'duel' : ai ? 'vs_ai' : 'solo',
       aiCharacter: ai?.character,
       aiLevel: ai?.level,
-    };
-    session.start(cfg);
+      duelPlayers: session.duel?.players,
+    });
   };
 
   return (
@@ -135,6 +135,18 @@ export default function GamePage() {
       {/* opponent */}
       {ai && <AiPanel ai={ai} game={game} />}
 
+      {/* pass & play turn banner */}
+      {session.duel && active && (
+        <div className="card-2 pop-in px-4 py-2.5 text-center" key={session.duel.current} style={{ borderColor: 'var(--accent)' }}>
+          <p className="text-sm font-bold">
+            🎯 {session.duel.players[session.duel.current]}&apos;s turn
+          </p>
+          <p className="text-[11px]" style={{ color: 'var(--text-dim)' }}>
+            {session.duel.players.map((p, i) => `${p}: ${session.duel!.guessCounts[i]}`).join(' · ')} guesses — first correct wins
+          </p>
+        </div>
+      )}
+
       {/* mechanic body */}
       <div className={active ? '' : 'pointer-events-none opacity-50'}>
         {game.mechanic === 'EXACT_NUMBER' && (
@@ -147,8 +159,8 @@ export default function GamePage() {
         {game.mechanic === 'MULTIPLE_CHOICE' && <MultipleChoice game={game} def={def} onGuess={session.guess} />}
       </div>
 
-      {/* hint */}
-      {active && hint && game.hintsRemaining > 0 && (
+      {/* hint (disabled in Pass & Play — brains only) */}
+      {active && hint && game.hintsRemaining > 0 && !session.duel && (
         <button className="btn btn-ghost mx-auto px-5 py-2 text-xs" onClick={() => session.hint(hint.type)}>
           💡 {hint.label} <span style={{ color: 'var(--danger)' }}>(−{hint.cost} pts)</span> · {game.hintsRemaining} left
         </button>

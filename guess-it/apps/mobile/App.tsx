@@ -20,24 +20,25 @@ const TABS: { id: Tab; label: string; emoji: string }[] = [
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('home');
-  const [playConfig, setPlayConfig] = useState<{ world?: string; versus?: boolean }>({});
+  const [playConfig, setPlayConfig] = useState<{ world?: string; mode?: 'vs_ai' | 'duel' }>({});
 
-  const openPlay = (world?: string, versus?: boolean) => {
-    setPlayConfig({ world, versus });
+  const openPlay = (world?: string, mode?: 'vs_ai' | 'duel') => {
+    setPlayConfig({ world, mode });
     setTab('play');
   };
 
   const playAgain = () => {
     const st = useSession.getState();
-    const { game, ai } = st;
+    const { game, ai, duel } = st;
     if (!game) return;
     st.start({
       world: game.world,
       mechanic: game.mechanic,
       difficulty: game.difficulty,
-      mode: ai ? 'vs_ai' : 'solo',
+      mode: duel ? 'duel' : ai ? 'vs_ai' : 'solo',
       aiCharacter: ai?.character,
       aiLevel: ai?.level,
+      duelPlayers: duel?.players,
     });
   };
 
@@ -55,9 +56,9 @@ export default function App() {
         {tab === 'home' && <HomeScreen onPlay={openPlay} onDaily={() => setTab('daily')} />}
         {tab === 'play' && (
           <PlayScreen
-            key={`${playConfig.world ?? ''}-${playConfig.versus ? 'v' : 's'}`}
+            key={`${playConfig.world ?? ''}-${playConfig.mode ?? 'solo'}`}
             initialWorld={playConfig.world}
-            initialVersus={playConfig.versus}
+            initialMode={playConfig.mode}
             onStarted={() => setTab('game')}
           />
         )}

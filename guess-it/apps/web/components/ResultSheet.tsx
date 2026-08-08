@@ -30,6 +30,8 @@ export function ResultSheet({
   const won = result.outcome === 'WON';
   const unlocked = ACHIEVEMENTS.filter((a) => profile.newlyUnlocked.includes(a.key));
   const challenge = session.challenge;
+  const duel = session.duel;
+  const duelWinner = duel && duel.winnerIndex !== null ? duel.players[duel.winnerIndex] : null;
 
   const copy = async (text: string, label: string) => {
     try {
@@ -70,7 +72,17 @@ export function ResultSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
       <div className="slide-up card w-full max-w-[520px] rounded-b-none p-6 pb-10" style={{ background: 'var(--surface)' }}>
-        {won ? (
+        {duel ? (
+          <>
+            <p className="text-center text-4xl">{duelWinner ? '🏆' : '🤝'}</p>
+            <h2 className="mt-1 text-center text-2xl font-extrabold">
+              {duelWinner ? `${duelWinner.toUpperCase()} CRACKED IT!` : 'THE PUZZLE WINS'}
+            </h2>
+            <p className="mt-1 text-center text-xs" style={{ color: 'var(--text-dim)' }}>
+              {duel.players.map((p, i) => `${p}: ${duel.guessCounts[i]} guesses`).join(' · ')}
+            </p>
+          </>
+        ) : won ? (
           <>
             <p className="text-center text-4xl">🎉</p>
             <h2 className="mt-1 text-center text-2xl font-extrabold">YOU CRACKED IT!</h2>
@@ -110,7 +122,7 @@ export function ResultSheet({
               </p>
             </div>
           )}
-          {profile.streak.current > 0 && (
+          {!duel && profile.streak.current > 0 && (
             <div>
               <p className="text-2xl font-extrabold" style={{ color: 'var(--warn)' }}>
                 🔥{profile.streak.current}

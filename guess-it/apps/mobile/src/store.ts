@@ -16,6 +16,7 @@ import {
   loseToAi,
   runAi,
   submitGuess,
+  supportsDuel,
   supportsVersus,
   tick as engineTick,
   useHint as engineUseHint,
@@ -209,17 +210,28 @@ export interface StartConfig {
   world: string;
   mechanic: Mechanic;
   difficulty: Difficulty;
-  mode: 'solo' | 'vs_ai';
+  mode: 'solo' | 'vs_ai' | 'duel';
   aiCharacter?: AiCharacterId;
   aiLevel?: AiLevel;
+  /** Pass & Play: 2–4 player names, in turn order. */
+  duelPlayers?: string[];
+}
+
+/** Same-device Pass & Play duel state (party mode — not recorded to profile). */
+export interface DuelContext {
+  players: string[];
+  current: number;
+  winnerIndex: number | null;
+  guessCounts: number[];
 }
 
 interface SessionState {
   def: GameDefinition | null;
   game: GameState | null;
   ai: AiRuntime | null;
-  mode: 'solo' | 'vs_ai';
+  mode: 'solo' | 'vs_ai' | 'duel';
   daily: string | null;
+  duel: DuelContext | null;
   error: string | null;
   errorNonce: number;
   recorded: boolean;
@@ -244,6 +256,11 @@ export const useSession = create<SessionState>()(
           set({ game, ai });
           return;
         }
+        // Pass & Play is party mode: winner shown on screen, nothing recorded.
+        if (s.duel) {
+          set({ game, ai, recorded: true, lastXp: null });
+          return;
+        }
         const versus = s.mode === 'vs_ai';
         const award = xpForResult(game.result, {
           versus,
@@ -257,7 +274,7 @@ export const useSession = create<SessionState>()(
             world: game.world,
             mechanic: game.mechanic,
             difficulty: game.difficulty,
-            mode: s.mode,
+            mode: versus ? 'vs_ai' : 'solo', // duel games never reach this path
             aiCharacter: ai?.character,
             aiLevel: ai?.level,
             outcome: game.result.outcome,
@@ -300,6 +317,7 @@ export const useSession = create<SessionState>()(
         ai: null,
         mode: 'solo' as const,
         daily: null,
+        duel: null,
         error: null,
         errorNonce: 0,
         recorded: false,
@@ -318,11 +336,30 @@ export const useSession = create<SessionState>()(
           const now = Date.now();
           const game = createGame(def, seed, now);
           const versus = config.mode === 'vs_ai' && supportsVersus(config.mechanic);
+          const dueling = config.mode === 'duel' && supportsDuel(config.mechanic);
           const ai =
             versus && config.aiCharacter && config.aiLevel
               ? createAiRuntime(config.aiCharacter, config.aiLevel, game, now)
               : null;
-          set({ def, game, ai, mode: versus ? 'vs_ai' : 'solo', daily: null, error: null, recorded: false, lastXp: null });
+          const players = dueling
+            ? (config.duelPlayers ?? ['Player 1', 'Player 2'])
+                .map((n, i) => n.trim() || `Player ${i + 1}`)
+                .slice(0, 4)
+            : null;
+          set({
+            def,
+            game,
+            ai,
+            mode: dueling ? 'duel' : versus ? 'vs_ai' : 'solo',
+            daily: null,
+            duel:
+              players && players.length >= 2
+                ? { players, current: 0, winnerIndex: null, guessCounts: players.map(() => 0) }
+                : null,
+            error: null,
+            recorded: false,
+            lastXp: null,
+          });
           return true;
         },
 
@@ -332,12 +369,39 @@ export const useSession = create<SessionState>()(
           const { definition } = dailyChallenge(dateKey);
           const now = Date.now();
           const game = createGame(definition, dailySeed(dateKey), now);
-          set({ def: definition, game, ai: null, mode: 'solo', daily: dateKey, error: null, recorded: false, lastXp: null });
+          set({ def: definition, game, ai: null, mode: 'solo', daily: dateKey, duel: null, error: null, recorded: false, lastXp: null });
           return true;
         },
 
-        guess: (text: string) => act((g, d) => submitGuess(g, d, text, Date.now())),
-        hint: (type: HintType) => act((g, d) => engineUseHint(g, d, type)),
+        guess: (text: string) => {
+          const { game, def, duel, ai } = get();
+          if (!game || !def) return;
+          try {
+            const next = submitGuess(game, def, text, Date.now());
+            if (duel && duel.winnerIndex === null) {
+              const consumed = next.attemptsUsed > game.attemptsUsed;
+              const d: DuelContext = { ...duel, guessCounts: [...duel.guessCounts] };
+              if (consumed) d.guessCounts[d.current]++;
+              if (next.status === 'WON') d.winnerIndex = d.current;
+              else if (consumed) d.current = (d.current + 1) % d.players.length;
+              set({ duel: d });
+            }
+            settle(next, ai);
+          } catch (e) {
+            if (e instanceof EngineError) {
+              set({ error: e.message, errorNonce: get().errorNonce + 1 });
+            } else {
+              throw e;
+            }
+          }
+        },
+        hint: (type: HintType) => {
+          if (get().duel) {
+            set({ error: 'No hints in Pass & Play — brains only!', errorNonce: get().errorNonce + 1 });
+            return;
+          }
+          act((g, d) => engineUseHint(g, d, type));
+        },
         advance: () => act((g, d) => engineAdvance(g, d, Date.now())),
         forfeit: () => act((g, d) => engineForfeit(g, d, Date.now())),
 
@@ -361,7 +425,7 @@ export const useSession = create<SessionState>()(
         },
 
         clear: () =>
-          set({ def: null, game: null, ai: null, mode: 'solo', daily: null, error: null, recorded: false, lastXp: null }),
+          set({ def: null, game: null, ai: null, mode: 'solo', daily: null, duel: null, error: null, recorded: false, lastXp: null }),
       };
     },
     { name: 'guessit-session', storage: createJSONStorage(() => AsyncStorage) },

@@ -15,6 +15,7 @@ import {
   mcTimeLimitMs,
   SCORE_FLOOR,
 } from './config';
+import { deepClone } from './clone';
 import { matchesAnswer, normalize } from './normalize';
 import { deriveSeed, Rng } from './prng';
 import {
@@ -196,7 +197,7 @@ function assertActive(state: GameState): void {
 }
 
 function clone(state: GameState): GameState {
-  return structuredClone(state);
+  return deepClone(state);
 }
 
 export function forfeit(state: GameState, def: GameDefinition, now: number): GameState {

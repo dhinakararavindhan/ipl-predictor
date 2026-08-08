@@ -45,3 +45,4 @@ guess-it/**/node_modules/
 guess-it/**/.next/
 guess-it/**/.expo/
 guess-it/**/*.tsbuildinfo
+guess-it/**/dist/

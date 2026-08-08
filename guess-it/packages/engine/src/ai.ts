@@ -5,6 +5,7 @@
  * receives only feedback triples; for knowledge games it holds an opaque
  * "solved" flag and submits the answer only at solve time.
  */
+import { deepClone } from './clone';
 import { REVEAL_IDENTIFIABILITY } from './config';
 import { evaluateExact, generateSecret } from './game';
 import { deriveSeed, Rng } from './prng';
@@ -167,7 +168,7 @@ export function runAi(
   if (state.status !== 'ACTIVE' || ai.solved) return { ai, aiSolved: false };
   if (now < ai.nextActionAt) return { ai, aiSolved: false };
 
-  const next: AiRuntime = structuredClone(ai);
+  const next: AiRuntime = deepClone(ai);
   const params = AI_PARAMS[next.level];
   const char = getCharacter(next.character);
   const rng = new Rng(deriveSeed(state.seed, `ai-turn-${next.guessCount}-${next.cluesUsed}`));

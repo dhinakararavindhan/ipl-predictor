@@ -16,6 +16,13 @@ export const C = {
   border: 'rgba(255,255,255,0.06)',
 };
 
+/** Professional game type: Space Grotesk display, JetBrains Mono digits (loaded in App.tsx). */
+export const FONT = {
+  display: 'SpaceGrotesk_700Bold',
+  displayMedium: 'SpaceGrotesk_600SemiBold',
+  mono: 'JetBrainsMono_700Bold',
+} as const;
+
 export const s = StyleSheet.create({
   card: {
     backgroundColor: C.surface,
@@ -30,11 +37,12 @@ export const s = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 14,
   },
-  h1: { color: C.text, fontSize: 26, fontWeight: '800' },
-  h2: { color: C.text, fontSize: 17, fontWeight: '700' },
+  h1: { color: C.text, fontSize: 26, fontFamily: FONT.display, letterSpacing: -0.3 },
+  h2: { color: C.text, fontSize: 17, fontFamily: FONT.display },
   body: { color: C.text, fontSize: 14 },
   dim: { color: C.dim, fontSize: 12 },
-  label: { color: C.dim, fontSize: 10, fontWeight: '700', letterSpacing: 2 },
+  label: { color: C.dim, fontSize: 10, fontFamily: FONT.displayMedium, letterSpacing: 2 },
+  digits: { fontFamily: FONT.mono, letterSpacing: 1 },
 });
 
 export function Card({
@@ -91,7 +99,7 @@ export function Btn({
         style,
       ]}
     >
-      <Text style={[{ color: C.text, fontWeight: '700', fontSize: 14 }, textStyle]}>{title}</Text>
+      <Text style={[{ color: C.text, fontFamily: FONT.display, fontSize: 14 }, textStyle]}>{title}</Text>
     </Pressable>
   );
 }
@@ -121,7 +129,7 @@ export function Chip({
         opacity: disabled ? 0.35 : pressed ? 0.8 : 1,
       })}
     >
-      <Text style={{ color: C.text, fontSize: 12, fontWeight: '600' }}>{title}</Text>
+      <Text style={{ color: C.text, fontSize: 12, fontFamily: FONT.displayMedium }}>{title}</Text>
     </Pressable>
   );
 }

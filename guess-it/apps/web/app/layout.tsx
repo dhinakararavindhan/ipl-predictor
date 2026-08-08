@@ -1,7 +1,12 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import Link from 'next/link';
 import './globals.css';
 import { SwRegister } from '@/components/SwRegister';
+
+const display = Space_Grotesk({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-display' });
+const body = Inter({ subsets: ['latin'], variable: '--font-body' });
+const mono = JetBrains_Mono({ subsets: ['latin'], weight: ['600', '700'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   title: 'GUESS IT — Think. Guess. Outsmart.',
@@ -17,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="min-h-screen">
         <SwRegister />
         <div className="mx-auto flex min-h-screen w-full max-w-[520px] flex-col px-4 pb-24">

@@ -69,8 +69,24 @@ export function ResultSheet({
     copy(`Can you beat me at GUESS IT? I scored ${result.score} 🔥\n${url}`, 'Challenge link copied!');
   };
 
+  const celebrate = won || (duel && duelWinner);
+  const confettiColors = ['#6C5CE7', '#00D2A8', '#FFB020', '#FF5C7A', '#4DA3FF'];
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+      {celebrate &&
+        Array.from({ length: 28 }).map((_, i) => (
+          <span
+            key={i}
+            className="confetti"
+            style={{
+              left: `${(i * 37) % 100}%`,
+              background: confettiColors[i % confettiColors.length],
+              animationDelay: `${(i % 7) * 0.09}s`,
+              transform: `scale(${0.7 + (i % 4) * 0.2})`,
+            }}
+          />
+        ))}
       <div className="slide-up card w-full max-w-[520px] rounded-b-none p-6 pb-10" style={{ background: 'var(--surface)' }}>
         {duel ? (
           <>

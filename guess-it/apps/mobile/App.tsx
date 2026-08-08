@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Platform, Pressable, StatusBar as RNStatusBar, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { C } from './src/theme';
+import { useFonts } from 'expo-font';
+import { SpaceGrotesk_600SemiBold, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
+import { JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
+import { C, FONT } from './src/theme';
 import { useSession } from './src/store';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { PlayScreen } from './src/screens/PlayScreen';
@@ -21,6 +24,11 @@ const TABS: { id: Tab; label: string; emoji: string }[] = [
 export default function App() {
   const [tab, setTab] = useState<Tab>('home');
   const [playConfig, setPlayConfig] = useState<{ world?: string; mode?: 'vs_ai' | 'duel' }>({});
+  const [fontsLoaded] = useFonts({
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+    JetBrainsMono_700Bold,
+  });
 
   const openPlay = (world?: string, mode?: 'vs_ai' | 'duel') => {
     setPlayConfig({ world, mode });
@@ -41,6 +49,10 @@ export default function App() {
       duelPlayers: duel?.players,
     });
   };
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: C.bg }} />;
+  }
 
   return (
     <View
@@ -83,7 +95,7 @@ export default function App() {
           {TABS.map((t) => (
             <Pressable key={t.id} onPress={() => setTab(t.id)} style={{ alignItems: 'center', paddingHorizontal: 12 }}>
               <Text style={{ fontSize: 18 }}>{t.emoji}</Text>
-              <Text style={{ color: tab === t.id ? C.text : C.dim, fontSize: 10, fontWeight: '600', marginTop: 2 }}>
+              <Text style={{ color: tab === t.id ? C.text : C.dim, fontSize: 10, fontFamily: FONT.displayMedium, marginTop: 2 }}>
                 {t.label}
               </Text>
             </Pressable>

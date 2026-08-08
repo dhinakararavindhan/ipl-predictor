@@ -49,12 +49,12 @@ export function ExactNumber({
       {/* history */}
       <div className="flex flex-col gap-1.5">
         {game.exact!.guesses.map((row, i) => (
-          <div key={i} className="pop-in flex items-center justify-center gap-1.5">
+          <div key={i} className="flex items-center justify-center gap-1.5">
             {row.digits.split('').map((d, j) => (
               <span
                 key={j}
-                className="digits flex h-10 w-10 items-center justify-center rounded-lg text-lg font-bold"
-                style={markStyle(row.perDigit[j])}
+                className={`digits flex h-10 w-10 items-center justify-center rounded-lg text-lg font-bold ${i === game.exact!.guesses.length - 1 ? 'flip-in' : ''}`}
+                style={{ ...markStyle(row.perDigit[j]), animationDelay: `${j * 80}ms` }}
                 title={row.perDigit[j]}
               >
                 {d}

@@ -27,8 +27,8 @@ export default function Home() {
           {salutation()}, {mounted ? profile.username.toUpperCase() : 'PLAYER'} 👋
         </p>
         <div className="mt-1 flex items-center justify-between">
-          <h1 className="text-3xl font-extrabold tracking-tight">
-            GUESS <span style={{ color: 'var(--accent)' }}>IT</span>
+          <h1 className="text-4xl font-bold tracking-tight">
+            GUESS <span className="brand-gradient">IT</span>
           </h1>
           {mounted && profile.streak.current > 0 && (
             <span className="flame-pulse text-sm font-bold" style={{ color: 'var(--warn)' }}>

@@ -12,7 +12,7 @@ import {
   type HintType,
 } from '@guess-it/engine';
 import { MECHANIC_META, namespaceFor } from '@guess-it/content';
-import { Btn, C, Card, s } from '../theme';
+import { Btn, C, Card, FONT, s } from '../theme';
 import { ACHIEVEMENTS, useProfile, useSession } from '../store';
 
 // ---------- mechanic bodies ----------
@@ -49,7 +49,7 @@ function ExactNumberBody({ game, onGuess }: { game: GameState; onGuess: (g: stri
                   key={j}
                   style={{ width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: mc.backgroundColor }}
                 >
-                  <Text style={{ color: mc.color, fontWeight: '800', fontSize: 16 }}>{d}</Text>
+                  <Text style={{ color: mc.color, fontFamily: FONT.mono, fontSize: 16 }}>{d}</Text>
                 </View>
               );
             })}
@@ -65,7 +65,7 @@ function ExactNumberBody({ game, onGuess }: { game: GameState; onGuess: (g: stri
             key={i}
             style={[s.card2, { width: 44, height: 48, alignItems: 'center', justifyContent: 'center', borderColor: entry[i] ? C.accent : C.border }]}
           >
-            <Text style={{ color: entry[i] ? C.text : 'rgba(77,163,255,0.4)', fontSize: 20, fontWeight: '800' }}>
+            <Text style={{ color: entry[i] ? C.text : 'rgba(77,163,255,0.4)', fontSize: 20, fontFamily: FONT.mono }}>
               {entry[i] ?? revealed.get(i) ?? ''}
             </Text>
           </View>
@@ -81,7 +81,7 @@ function ExactNumberBody({ game, onGuess }: { game: GameState; onGuess: (g: stri
               onPress={() => push(d)}
               style={[s.card2, { width: 52, height: 48, alignItems: 'center', justifyContent: 'center', opacity: used ? 0.3 : 1 }]}
             >
-              <Text style={{ color: C.text, fontSize: 18, fontWeight: '700' }}>{d}</Text>
+              <Text style={{ color: C.text, fontSize: 18, fontFamily: FONT.mono }}>{d}</Text>
             </Pressable>
           );
         })}
@@ -380,7 +380,7 @@ export function GameScreen({ onExit, onPlayAgain }: { onExit: () => void; onPlay
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ color: C.accent2, fontWeight: '800' }}>
+            <Text style={{ color: C.accent2, fontFamily: FONT.mono, fontSize: 15 }}>
               {active ? potentialScore(game) : result?.score}
             </Text>
             <Text style={s.label}>PTS</Text>
@@ -514,20 +514,20 @@ export function GameScreen({ onExit, onPlayAgain }: { onExit: () => void; onPlay
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 26, marginTop: 14 }}>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ color: result.outcome === 'WON' ? C.accent2 : C.dim, fontSize: 22, fontWeight: '800' }}>
+                  <Text style={{ color: result.outcome === 'WON' ? C.accent2 : C.dim, fontSize: 22, fontFamily: FONT.mono }}>
                     {result.score}
                   </Text>
                   <Text style={s.label}>SCORE</Text>
                 </View>
                 {session.lastXp && session.lastXp.total > 0 && (
                   <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: C.accent, fontSize: 22, fontWeight: '800' }}>+{session.lastXp.total}</Text>
+                    <Text style={{ color: C.accent, fontSize: 22, fontFamily: FONT.mono }}>+{session.lastXp.total}</Text>
                     <Text style={s.label}>XP</Text>
                   </View>
                 )}
                 {profile.streak.current > 0 && (
                   <View style={{ alignItems: 'center' }}>
-                    <Text style={{ color: C.warn, fontSize: 22, fontWeight: '800' }}>🔥{profile.streak.current}</Text>
+                    <Text style={{ color: C.warn, fontSize: 22, fontFamily: FONT.mono }}>🔥{profile.streak.current}</Text>
                     <Text style={s.label}>STREAK</Text>
                   </View>
                 )}

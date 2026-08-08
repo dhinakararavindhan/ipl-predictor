@@ -4,9 +4,15 @@ Three distribution paths, from instant to store-grade.
 
 ## Path A — Live now: hosted app + install (no accounts needed)
 
-The web app auto-deploys to **GitHub Pages** on every push (`.github/workflows/deploy-web.yml`):
+The web app auto-deploys to **GitHub Pages** on every push (`.github/workflows/deploy-web.yml`
+builds the static export and publishes it to the `gh-pages` branch):
 
 > **https://dhinakararavindhan.github.io/ipl-predictor/**
+
+**One-time activation (repo owner, ~20 seconds):** if that URL shows 404, open the repo's
+**Settings → Pages**, set *Source: Deploy from a branch*, pick **`gh-pages`** / `/ (root)`,
+and Save. GitHub serves the site within a minute and every future push updates it
+automatically — no further clicks ever.
 
 Share that link (or the QR below). What players see:
 

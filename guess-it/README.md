@@ -78,7 +78,12 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
     recipient play the *exact same puzzle* (same seed); when they finish they see the
     head-to-head. Plus Wordle-style spoiler-free emoji result sharing. Backend-free preview of
     API Spec §6.
-  - *Online quick match / ranked:* Phase 2–3, needs the backend (Architecture §7, API Spec §9).
+  - *Live Race (web + PWA):* 🌎 **two phones, real time** — create a room, share the 5-letter
+    code, race the identical puzzle live with the opponent's progress streaming in
+    (`services/realtime`: server-authoritative WebSocket server reusing the engine, in-memory
+    rooms, no database; walkover on disconnect, rematch built in). Needs the realtime server
+    deployed — see DISTRIBUTION.md.
+  - *Random matchmaking / ranked:* Phase 3 — needs accounts + persistence (the full backend).
 - **Achievements:** First Guess, Code Breaker, Detective, Number Wizard, Perfect, Lightning,
   Streak Master, Legend.
 - **Privacy:** everything stored locally (localStorage / AsyncStorage); export + delete built in.

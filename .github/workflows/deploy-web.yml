@@ -30,6 +30,10 @@ jobs:
         env:
           STATIC_EXPORT: '1'
           NEXT_PUBLIC_BASE_PATH: /ipl-predictor
+          # Live Race: set to wss://<your-realtime-host>/ws once the server is
+          # deployed (guess-it/services/realtime/README.md). Empty = feature
+          # shows a friendly "server not connected" note.
+          NEXT_PUBLIC_REALTIME_URL: ${{ vars.REALTIME_URL || '' }}
       # Publish the static site to the gh-pages branch (GitHub Pages source).
       - uses: peaceiris/actions-gh-pages@v4
         with:

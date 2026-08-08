@@ -1,0 +1,42 @@
+# GUESS IT realtime server — live friend races
+
+Server-authoritative WebSocket server for two-phone live racing. In-memory rooms,
+**no database required**. Reuses `@guess-it/engine` directly, so game rules here are the same
+28-test-covered engine the apps use — clients only ever receive `PlayerView` (no answers leak).
+
+## Architecture note (deviation from docs/architecture.md, intentional)
+
+The System Architecture doc specifies a Java Spring Boot monolith for the full backend
+(accounts, leaderboards, persistence). Live racing needs none of that, so this service is
+Node + TypeScript reusing the reference engine — zero rule re-implementation, free-tier
+deployable. When the full backend is built, this service either stays as the realtime tier
+(Architecture §9 scaling path) or folds into it.
+
+## Run locally
+
+```bash
+npm install
+npm run dev          # ws://localhost:8787/ws · GET /health
+npm test             # 8 race tests: identical puzzles, progress-not-content, win/loss/walkover/rematch
+```
+
+The web app connects to `ws://localhost:8787/ws` automatically in dev.
+
+## Deploy (pick one — both free-tier friendly)
+
+**Render** (easiest): dashboard → New → Blueprint → this repo (uses `render.yaml`).
+**Fly.io**: `cd guess-it && fly launch --copy-config --no-deploy && fly deploy` (uses `fly.toml`).
+
+Then point the web app at it: set `NEXT_PUBLIC_REALTIME_URL=wss://<your-host>/ws` in
+`.github/workflows/deploy-web.yml`'s build env and push — the hosted game's Live Race goes live.
+Optionally set `ALLOWED_ORIGIN=https://dhinakararavindhan.github.io` on the server to restrict
+connections to your site.
+
+## Protocol
+
+One WebSocket (`/ws`), JSON messages — see `src/protocol.ts`. Flow:
+`create` → room code → friend `join`s → host `start` → both get identical boards (same seed) →
+`action` (guess/advance/hint) → own `view` updates + opponent `progress` events (counts only,
+never content) → `game_over` (WIN / LOSS / DRAW / WALKOVER on disconnect) → `rematch`.
+
+Raceable mechanics: Crack the Code, Clue Guess, Higher/Lower.

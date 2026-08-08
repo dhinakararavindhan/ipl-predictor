@@ -88,13 +88,13 @@ export default function Home() {
             Duel friends on one phone
           </p>
         </Link>
-        <div className="card p-4 opacity-50">
+        <Link href="/online" className="card p-4">
           <p className="text-2xl">🌎</p>
-          <p className="mt-1 font-bold">Quick Match</p>
+          <p className="mt-1 font-bold">Live Race</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
-            Online — coming in Phase 2
+            Two phones, real time
           </p>
-        </div>
+        </Link>
       </div>
       <p className="-mt-1 text-center text-[11px]" style={{ color: 'var(--text-dim)' }}>
         ⚔️ Tip: finish any game and tap “Challenge a friend” to send them the same puzzle.

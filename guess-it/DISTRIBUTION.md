@@ -65,6 +65,20 @@ Subsequent releases are one command: `eas build --platform android && eas submit
 **iOS / App Store** works the same via `eas build --platform ios` + `eas submit`, but needs the
 $99/yr Apple Developer account. The Expo project is already iOS-clean (bundle verified).
 
+## Live two-phone racing (realtime server)
+
+The Live Race feature (🌎 on home) needs the small realtime server in
+`guess-it/services/realtime` — in-memory rooms, no database, free-tier friendly:
+
+1. Deploy it: **Render** (New → Blueprint → this repo) or **Fly.io**
+   (`cd guess-it && fly launch --copy-config --no-deploy && fly deploy`). Details in
+   `services/realtime/README.md`.
+2. In the GitHub repo: Settings → Secrets and variables → Actions → **Variables** → add
+   `REALTIME_URL` = `wss://<your-host>/ws`.
+3. Re-run the deploy-web workflow (or push anything). Live Race lights up on the hosted game.
+
+Until then, Live Race shows a friendly "server not connected" note; everything else works.
+
 ## Which to use when
 
 | Goal | Path |

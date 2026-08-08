@@ -36,6 +36,7 @@ import {
   type Mechanic,
 } from '@guess-it/engine';
 import { dailyChallenge, dailySeed, getDefinition, pickDefinition, utcDateKey } from '@guess-it/content';
+import { track } from './analytics';
 import type { ChallengePayload } from './challenge';
 
 // ---------------- profile ----------------
@@ -273,6 +274,17 @@ export const useSession = create<SessionState>()(
           set({ game, ai });
           return;
         }
+        track('game_completed', {
+          mechanic: game.mechanic,
+          world: game.world,
+          difficulty: game.difficulty,
+          mode: s.duel ? 'duel' : s.mode,
+          outcome: game.result.outcome,
+          score: game.result.score,
+          daily: !!s.daily,
+          challenge: !!s.challenge,
+          durationMs: game.result.durationMs,
+        });
         // Pass & Play is party mode: winner shown on screen, nothing recorded
         // to the (single, personal) profile.
         if (s.duel) {
@@ -381,6 +393,7 @@ export const useSession = create<SessionState>()(
             recorded: false,
             lastXp: null,
           });
+          track('game_started', { mechanic: config.mechanic, world: config.world, difficulty: config.difficulty, mode: config.mode });
           return true;
         },
 
@@ -403,6 +416,7 @@ export const useSession = create<SessionState>()(
             recorded: false,
             lastXp: null,
           });
+          track('challenge_accepted', { mechanic: def.mechanic, world: p.w, difficulty: p.df });
           return 'ok';
         },
 

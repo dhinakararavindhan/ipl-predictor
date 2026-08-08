@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useProfile, useSession } from '@/lib/store';
@@ -91,6 +92,15 @@ export default function SettingsPage() {
         <h2 className="text-sm font-bold">About</h2>
         <p className="mt-1 text-xs" style={{ color: 'var(--text-dim)' }}>
           GUESS IT · MVP build · engine v1.0.0 · Think. Guess. Outsmart.
+        </p>
+        <p className="mt-2 text-xs">
+          <Link href="/privacy" className="underline" style={{ color: 'var(--text-dim)' }}>
+            Privacy policy
+          </Link>
+          {' · '}
+          <Link href="/terms" className="underline" style={{ color: 'var(--text-dim)' }}>
+            Terms of use
+          </Link>
         </p>
       </div>
     </main>

@@ -6,6 +6,7 @@
  */
 import { create } from 'zustand';
 import type { Difficulty, Mechanic, PlayerView } from '@guess-it/engine';
+import { track } from './analytics';
 
 export const REALTIME_URL =
   process.env.NEXT_PUBLIC_REALTIME_URL ??
@@ -100,6 +101,7 @@ export const useOnline = create<OnlineState>((set, get) => {
           });
           break;
         case 'game_start':
+          track('race_started', { mechanic: m.view.mechanic, world: m.view.world, difficulty: m.view.difficulty });
           set({
             phase: 'racing',
             view: m.view,
@@ -116,6 +118,7 @@ export const useOnline = create<OnlineState>((set, get) => {
           set({ opponent: m.progress });
           break;
         case 'game_over':
+          track('race_finished', { outcome: m.outcome, mechanic: m.view.mechanic });
           set({ phase: 'over', gameOver: m, view: m.view });
           break;
         case 'opponent_left':

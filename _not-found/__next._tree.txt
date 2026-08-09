@@ -1,2 +1,2 @@
-:HL["/ipl-predictor/_next/static/chunks/0k-iba_omg_tb.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"R2VSCbU4Rli40yTPiUwZx"}
+:HL["/ipl-predictor/_next/static/chunks/0d94mt_ubcg4w.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"/_not-found","param":null,"prefetchHints":0,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}}}},"staleTime":300,"buildId":"sHHXJNncn_3vRNXSci9Y7"}

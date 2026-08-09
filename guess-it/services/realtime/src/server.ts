@@ -29,7 +29,7 @@ const ALLOWED = (process.env.ALLOWED_ORIGIN ?? '')
 
 const storage = await createStorage();
 const daily = new DailyApi(storage);
-const manager = new RoomManager();
+const manager = new RoomManager(Math.random, storage);
 setInterval(() => manager.sweep(), 5 * 60 * 1000).unref();
 
 function sanitizeName(name: unknown): string {
@@ -208,17 +208,24 @@ wss.on('connection', (ws: WebSocket, req) => {
       switch (msg.type) {
         case 'create':
           player.name = sanitizeName(msg.name);
+          player.authId = verifyToken(msg.token);
           manager.create(player, msg.config);
           break;
         case 'join':
           player.name = sanitizeName(msg.name);
+          player.authId = verifyToken(msg.token);
           manager.join(player, String(msg.code ?? ''));
+          break;
+        case 'quickmatch':
+          player.name = sanitizeName(msg.name);
+          player.authId = verifyToken(msg.token);
+          manager.quickmatch(player);
           break;
         case 'start':
           manager.start(id);
           break;
         case 'action':
-          manager.action(id, msg.action, typeof msg.payload === 'string' ? msg.payload : undefined);
+          void manager.action(id, msg.action, typeof msg.payload === 'string' ? msg.payload : undefined);
           break;
         case 'rematch':
           manager.rematch(id);

@@ -14,8 +14,9 @@ export interface RaceConfig {
 
 // ---- client → server ----
 export type ClientMsg =
-  | { type: 'create'; name: string; config: RaceConfig }
-  | { type: 'join'; code: string; name: string }
+  | { type: 'create'; name: string; config: RaceConfig; token?: string }
+  | { type: 'join'; code: string; name: string; token?: string }
+  | { type: 'quickmatch'; name: string; token?: string }
   | { type: 'start' } // host only, requires 2 players
   | { type: 'action'; action: 'guess' | 'advance' | 'hint'; payload?: string }
   | { type: 'rematch' }
@@ -36,6 +37,7 @@ export interface OpponentProgress {
 }
 
 export type ServerMsg =
+  | { type: 'searching' }
   | { type: 'lobby'; code: string; players: LobbyPlayer[]; config: RaceConfig; canStart: boolean }
   | { type: 'game_start'; view: PlayerView; opponentName: string }
   | { type: 'view'; view: PlayerView } // your own state after your action
@@ -44,8 +46,8 @@ export type ServerMsg =
       type: 'game_over';
       outcome: 'WIN' | 'LOSS' | 'DRAW' | 'WALKOVER';
       view: PlayerView; // terminal — includes the answer via result
-      you: { name: string; score: number; attemptsUsed: number };
-      opponent: { name: string; score: number; attemptsUsed: number; finished: boolean };
+      you: { name: string; score: number; attemptsUsed: number; rating?: number; ratingDelta?: number };
+      opponent: { name: string; score: number; attemptsUsed: number; finished: boolean; rating?: number };
     }
   | { type: 'opponent_left' }
   | { type: 'rematch_offer'; from: string }

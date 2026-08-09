@@ -184,6 +184,21 @@ export default function OnlinePage() {
             </p>
           </div>
         </div>
+        {g.you.rating !== undefined && (
+          <p className="text-center text-sm font-bold" style={{ color: (g.you.ratingDelta ?? 0) >= 0 ? 'var(--accent-2)' : 'var(--danger)' }}>
+            📈 Rating: {g.you.rating}{' '}
+            <span className="digits">
+              ({(g.you.ratingDelta ?? 0) >= 0 ? '+' : ''}
+              {g.you.ratingDelta})
+            </span>
+            {g.opponent.rating !== undefined && (
+              <span className="text-xs font-normal" style={{ color: 'var(--text-dim)' }}>
+                {' '}
+                · {g.opponent.name}: {g.opponent.rating}
+              </span>
+            )}
+          </p>
+        )}
         {online.rematchOffer && (
           <p className="text-center text-sm font-bold" style={{ color: 'var(--warn)' }}>
             {online.rematchOffer} wants a rematch!
@@ -199,6 +214,23 @@ export default function OnlinePage() {
             LEAVE
           </button>
         </div>
+      </main>
+    );
+  }
+
+  // ---------- searching ----------
+  if (online.phase === 'searching') {
+    return (
+      <main className="flex flex-col items-center gap-4 pt-24">
+        <p className="animate-pulse text-5xl">🎲</p>
+        <h1 className="text-xl font-bold">Finding an opponent…</h1>
+        <p className="text-center text-xs" style={{ color: 'var(--text-dim)' }}>
+          You&apos;ll race the moment someone else hits Quick Match. Tell a friend to
+          try it right now — instant match.
+        </p>
+        <button className="btn btn-ghost px-8 py-3 text-sm font-bold" onClick={() => online.leave()}>
+          CANCEL
+        </button>
       </main>
     );
   }
@@ -261,6 +293,17 @@ export default function OnlinePage() {
 
       {mode === 'menu' && (
         <div className="flex flex-col gap-3">
+          <button
+            className="card p-5 text-left"
+            style={{ borderColor: 'var(--accent)' }}
+            onClick={() => online.quickMatch(username)}
+          >
+            <p className="text-2xl">🎲</p>
+            <p className="mt-1 font-bold">Quick Match</p>
+            <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
+              Race a random opponent — rated with Elo
+            </p>
+          </button>
           <button className="card p-5 text-left" onClick={() => setMode('create')}>
             <p className="text-2xl">🎯</p>
             <p className="mt-1 font-bold">Create a room</p>

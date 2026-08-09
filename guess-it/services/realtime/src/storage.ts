@@ -14,7 +14,10 @@ export interface PlayerRecord {
   id: string;
   name: string;
   createdAt: number;
+  rating?: number; // Elo, default 1000 (BRD §25)
 }
+
+export const INITIAL_RATING = 1000;
 
 export interface DailyScoreRow {
   playerId: string;
@@ -38,6 +41,8 @@ export interface Storage {
   renamePlayer(id: string, name: string): Promise<void>;
   getPlayer(id: string): Promise<PlayerRecord | null>;
   /** Returns false if this player already has a score for the date (once/day). */
+  getRating(id: string): Promise<number>;
+  setRating(id: string, rating: number): Promise<void>;
   submitDailyScore(dateKey: string, row: DailyScoreRow): Promise<boolean>;
   hasDailyScore(dateKey: string, playerId: string): Promise<DailyScoreRow | null>;
   topDaily(dateKey: string, limit: number): Promise<DailyScoreRow[]>;
@@ -97,6 +102,18 @@ export class JsonFileStore implements Storage {
     return this.data.players[id] ?? null;
   }
 
+  async getRating(id: string): Promise<number> {
+    return this.data.players[id]?.rating ?? INITIAL_RATING;
+  }
+
+  async setRating(id: string, rating: number): Promise<void> {
+    const p = this.data.players[id];
+    if (p) {
+      p.rating = rating;
+      this.dirty = true;
+    }
+  }
+
   async submitDailyScore(dateKey: string, row: DailyScoreRow): Promise<boolean> {
     const rows = (this.data.daily[dateKey] ??= []);
     if (rows.some((r) => r.playerId === row.playerId)) return false;
@@ -146,8 +163,10 @@ export class PgStore implements Storage {
       CREATE TABLE IF NOT EXISTS players (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        created_at BIGINT NOT NULL
+        created_at BIGINT NOT NULL,
+        rating INT NOT NULL DEFAULT 1000
       );
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS rating INT NOT NULL DEFAULT 1000;
       CREATE TABLE IF NOT EXISTS daily_scores (
         date_key TEXT NOT NULL,
         player_id TEXT NOT NULL REFERENCES players(id),
@@ -178,9 +197,23 @@ export class PgStore implements Storage {
   }
 
   async getPlayer(id: string): Promise<PlayerRecord | null> {
-    const r = await this.pool.query(`SELECT id, name, created_at FROM players WHERE id = $1`, [id]);
+    const r = await this.pool.query(`SELECT id, name, created_at, rating FROM players WHERE id = $1`, [id]);
     if (!r.rows[0]) return null;
-    return { id: r.rows[0].id, name: r.rows[0].name, createdAt: Number(r.rows[0].created_at) };
+    return {
+      id: r.rows[0].id,
+      name: r.rows[0].name,
+      createdAt: Number(r.rows[0].created_at),
+      rating: r.rows[0].rating,
+    };
+  }
+
+  async getRating(id: string): Promise<number> {
+    const r = await this.pool.query(`SELECT rating FROM players WHERE id = $1`, [id]);
+    return r.rows[0]?.rating ?? INITIAL_RATING;
+  }
+
+  async setRating(id: string, rating: number): Promise<void> {
+    await this.pool.query(`UPDATE players SET rating = $2 WHERE id = $1`, [id, rating]);
   }
 
   async submitDailyScore(dateKey: string, row: DailyScoreRow): Promise<boolean> {

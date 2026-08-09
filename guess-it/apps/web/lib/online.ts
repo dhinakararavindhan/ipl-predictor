@@ -29,12 +29,21 @@ export interface OpponentProgress {
 export interface GameOver {
   outcome: 'WIN' | 'LOSS' | 'DRAW' | 'WALKOVER';
   view: PlayerView;
-  you: { name: string; score: number; attemptsUsed: number };
-  opponent: { name: string; score: number; attemptsUsed: number; finished: boolean };
+  you: { name: string; score: number; attemptsUsed: number; rating?: number; ratingDelta?: number };
+  opponent: { name: string; score: number; attemptsUsed: number; finished: boolean; rating?: number };
+}
+
+function storedToken(): string | undefined {
+  try {
+    const raw = localStorage.getItem('guessit-player');
+    return raw ? (JSON.parse(raw) as { token: string }).token : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 interface OnlineState {
-  phase: 'idle' | 'connecting' | 'lobby' | 'racing' | 'over';
+  phase: 'idle' | 'connecting' | 'searching' | 'lobby' | 'racing' | 'over';
   code: string | null;
   players: { name: string; isHost: boolean; isYou: boolean }[];
   canStart: boolean;
@@ -49,6 +58,7 @@ interface OnlineState {
 
   createRoom: (name: string, config: RaceConfig) => void;
   joinRoom: (name: string, code: string) => void;
+  quickMatch: (name: string) => void;
   start: () => void;
   sendAction: (action: 'guess' | 'advance' | 'hint', payload?: string) => void;
   rematch: () => void;
@@ -82,7 +92,7 @@ export const useOnline = create<OnlineState>((set, get) => {
     };
     socket.onclose = () => {
       const p = get().phase;
-      if (p === 'racing' || p === 'lobby') {
+      if (p === 'racing' || p === 'lobby' || p === 'searching') {
         fail('Connection lost.');
         set({ phase: 'idle', view: null, opponent: null });
       }
@@ -90,6 +100,9 @@ export const useOnline = create<OnlineState>((set, get) => {
     socket.onmessage = (ev) => {
       const m = JSON.parse(ev.data as string);
       switch (m.type) {
+        case 'searching':
+          set({ phase: 'searching' });
+          break;
         case 'lobby':
           set({
             phase: 'lobby',
@@ -172,8 +185,9 @@ export const useOnline = create<OnlineState>((set, get) => {
     error: null,
     errorNonce: 0,
 
-    createRoom: (name, config) => connect(() => send({ type: 'create', name, config })),
-    joinRoom: (name, code) => connect(() => send({ type: 'join', name, code })),
+    createRoom: (name, config) => connect(() => send({ type: 'create', name, config, token: storedToken() })),
+    joinRoom: (name, code) => connect(() => send({ type: 'join', name, code, token: storedToken() })),
+    quickMatch: (name) => connect(() => send({ type: 'quickmatch', name, token: storedToken() })),
     start: () => send({ type: 'start' }),
     sendAction: (action, payload) => send({ type: 'action', action, payload }),
     rematch: () => send({ type: 'rematch' }),

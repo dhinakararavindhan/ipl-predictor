@@ -20,6 +20,8 @@ import {
   type Mechanic,
 } from '@guess-it/engine';
 import { pickDefinition } from '@guess-it/content';
+import { eloUpdate } from './elo.js';
+import type { Storage } from './storage.js';
 import type { OpponentProgress, RaceConfig, ServerMsg } from './protocol';
 
 /** Mechanics that make good live races: same-puzzle, first-correct-wins. */
@@ -31,6 +33,8 @@ export interface Player {
   id: string;
   name: string;
   send: (msg: ServerMsg) => void;
+  /** Verified player id when the client sent a valid token — enables ratings. */
+  authId?: string | null;
   state?: GameState;
   rematchRequested?: boolean;
 }
@@ -62,13 +66,47 @@ function progressOf(state: GameState): OpponentProgress {
   return p;
 }
 
+const QUICKMATCH_CONFIGS: RaceConfig[] = [
+  { world: 'numbers', mechanic: 'EXACT_NUMBER', difficulty: 'MEDIUM' },
+  { world: 'anything', mechanic: 'CLUE_GUESS', difficulty: 'MEDIUM' },
+  { world: 'numbers', mechanic: 'HIGHER_LOWER', difficulty: 'MEDIUM' },
+];
+
 export class RoomManager {
   private rooms = new Map<string, Room>();
   private byPlayer = new Map<string, Room>();
+  private queue: Player[] = [];
   private random: () => number;
+  private storage: Storage | null;
 
-  constructor(random: () => number = Math.random) {
+  constructor(random: () => number = Math.random, storage: Storage | null = null) {
     this.random = random;
+    this.storage = storage;
+  }
+
+  /** Random matchmaking (BRD §16.2): pair the first two waiting players. */
+  quickmatch(player: Player): void {
+    this.leave(player.id);
+    const opponent = this.queue.find((p) => p.id !== player.id);
+    if (!opponent) {
+      if (!this.queue.some((p) => p.id === player.id)) this.queue.push(player);
+      player.send({ type: 'searching' });
+      return;
+    }
+    this.queue = this.queue.filter((p) => p.id !== opponent.id && p.id !== player.id);
+    const config = QUICKMATCH_CONFIGS[Math.floor(this.random() * QUICKMATCH_CONFIGS.length)];
+    const room: Room = {
+      code: this.newCode(),
+      hostId: opponent.id,
+      config,
+      status: 'lobby',
+      players: [opponent, player],
+      createdAt: Date.now(),
+    };
+    this.rooms.set(room.code, room);
+    this.byPlayer.set(opponent.id, room);
+    this.byPlayer.set(player.id, room);
+    this.launch(room);
   }
 
   private newCode(): string {
@@ -157,7 +195,7 @@ export class RoomManager {
     }
   }
 
-  action(playerId: string, action: 'guess' | 'advance' | 'hint', payload?: string): void {
+  async action(playerId: string, action: 'guess' | 'advance' | 'hint', payload?: string): Promise<void> {
     const room = this.byPlayer.get(playerId);
     if (!room || room.status !== 'racing' || !room.def) return;
     const player = room.players.find((p) => p.id === playerId)!;
@@ -190,7 +228,7 @@ export class RoomManager {
       if (opponent.state && opponent.state.status === 'ACTIVE') {
         opponent.state = loseToAi(opponent.state, room.def, now);
       }
-      this.finish(room);
+      await this.finish(room);
       return;
     }
 
@@ -199,23 +237,17 @@ export class RoomManager {
 
     // both exhausted their attempts → the puzzle wins
     if (player.state.status !== 'ACTIVE' && opponent.state && opponent.state.status !== 'ACTIVE') {
-      this.finish(room);
+      await this.finish(room);
     } else if (player.state.status !== 'ACTIVE') {
       // this player is out; opponent keeps racing the board
       player.send({ type: 'view', view: playerView(player.state, room.def) });
     }
   }
 
-  private finish(room: Room): void {
+  private async finish(room: Room): Promise<void> {
     if (!room.def) return;
     room.status = 'over';
     const [a, b] = room.players;
-    const summary = (p: Player) => ({
-      name: p.name,
-      score: p.state?.result?.score ?? 0,
-      attemptsUsed: p.state?.attemptsUsed ?? 0,
-      finished: p.state?.status !== 'ACTIVE',
-    });
     const outcomeFor = (me: Player, them: Player): 'WIN' | 'LOSS' | 'DRAW' => {
       const meWon = me.state?.status === 'WON';
       const themWon = them.state?.status === 'WON';
@@ -223,6 +255,14 @@ export class RoomManager {
       if (themWon && !meWon) return 'LOSS';
       return 'DRAW';
     };
+    const ratings = await this.applyRatings(a, b, outcomeFor(a, b));
+    const summary = (p: Player) => ({
+      name: p.name,
+      score: p.state?.result?.score ?? 0,
+      attemptsUsed: p.state?.attemptsUsed ?? 0,
+      finished: p.state?.status !== 'ACTIVE',
+      ...(ratings?.get(p.id) ?? {}),
+    });
     for (const [me, them] of [
       [a, b],
       [b, a],
@@ -234,6 +274,27 @@ export class RoomManager {
         you: summary(me),
         opponent: summary(them),
       });
+    }
+  }
+
+  /** Elo (BRD §25): applies when both racers sent valid tokens. */
+  private async applyRatings(
+    a: Player,
+    b: Player,
+    outcomeA: 'WIN' | 'LOSS' | 'DRAW',
+  ): Promise<Map<string, { rating: number; ratingDelta: number }> | null> {
+    if (!this.storage || !a.authId || !b.authId || a.authId === b.authId) return null;
+    try {
+      const [ra, rb] = await Promise.all([this.storage.getRating(a.authId), this.storage.getRating(b.authId)]);
+      const scoreA = outcomeA === 'WIN' ? 1 : outcomeA === 'LOSS' ? 0 : 0.5;
+      const [na, nb] = eloUpdate(ra, rb, scoreA);
+      await Promise.all([this.storage.setRating(a.authId, na), this.storage.setRating(b.authId, nb)]);
+      return new Map([
+        [a.id, { rating: na, ratingDelta: na - ra }],
+        [b.id, { rating: nb, ratingDelta: nb - rb }],
+      ]);
+    } catch {
+      return null;
     }
   }
 
@@ -253,6 +314,7 @@ export class RoomManager {
 
   /** Disconnect or explicit leave: mid-race → opponent wins by walkover. */
   leave(playerId: string): void {
+    this.queue = this.queue.filter((p) => p.id !== playerId);
     const room = this.byPlayer.get(playerId);
     if (!room) return;
     this.byPlayer.delete(playerId);
@@ -269,17 +331,24 @@ export class RoomManager {
       if (remaining.state.status === 'ACTIVE') {
         remaining.state = submitWalkover(remaining.state, room.def);
       }
-      remaining.send({
-        type: 'game_over',
-        outcome: 'WALKOVER',
-        view: playerView(remaining.state, room.def),
-        you: {
-          name: remaining.name,
-          score: remaining.state.result?.score ?? 0,
-          attemptsUsed: remaining.state.attemptsUsed,
-        },
-        opponent: { name: leaver?.name ?? 'Opponent', score: 0, attemptsUsed: 0, finished: false },
-      });
+      const send = (ratings: Map<string, { rating: number; ratingDelta: number }> | null) =>
+        remaining.send({
+          type: 'game_over',
+          outcome: 'WALKOVER',
+          view: playerView(remaining.state!, room.def!),
+          you: {
+            name: remaining.name,
+            score: remaining.state!.result?.score ?? 0,
+            attemptsUsed: remaining.state!.attemptsUsed,
+            ...(ratings?.get(remaining.id) ?? {}),
+          },
+          opponent: { name: leaver?.name ?? 'Opponent', score: 0, attemptsUsed: 0, finished: false },
+        });
+      if (leaver) {
+        void this.applyRatings(remaining, leaver, 'WIN').then(send);
+      } else {
+        send(null);
+      }
     } else {
       remaining.send({ type: 'opponent_left' });
       if (room.status === 'lobby') {

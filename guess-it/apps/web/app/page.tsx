@@ -22,7 +22,7 @@ export default function Home() {
   const dailyDone = mounted && !!profile.dailyResults[utcDateKey()];
 
   return (
-    <main className="flex flex-col gap-4 pt-8">
+    <main className="wide flex flex-col gap-4 pt-8 lg:gap-5 lg:pt-10">
       <header className="pop-in">
         <p className="text-xs font-semibold tracking-widest" style={{ color: 'var(--text-dim)' }}>
           {salutation()}, {mounted ? profile.username.toUpperCase() : 'PLAYER'} 👋
@@ -46,63 +46,67 @@ export default function Home() {
 
       {mounted && <InstallPrompt />}
 
-      {/* Daily Mystery */}
-      <Link href="/daily" className="card pop-in block p-6 text-center" style={{ borderColor: 'var(--accent)' }}>
-        <p className="text-4xl">🎯</p>
-        <h2 className="mt-2 text-xl font-extrabold">DAILY MYSTERY</h2>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-dim)' }}>
-          Everyone on Earth gets the same challenge
-        </p>
-        <span
-          className="btn btn-primary mt-4 inline-block px-8 py-2.5 text-sm"
-          style={dailyDone ? { background: 'var(--surface-2)', color: 'var(--text-dim)' } : undefined}
+      {/* Daily Mystery + Weekly Gauntlet: hero row on desktop */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3">
+        <Link
+          href="/daily"
+          className="card pop-in block p-6 text-center lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:p-10"
+          style={{ borderColor: 'var(--accent)' }}
         >
-          {dailyDone ? `Played ✓ — ${profile.dailyResults[utcDateKey()].score} pts` : 'PLAY'}
-        </span>
-      </Link>
-
-      {/* Weekly Gauntlet */}
-      <Link href="/weekly" className="card flex items-center gap-3 p-4">
-        <span className="text-2xl">🏁</span>
-        <span className="flex-1">
-          <span className="block font-bold">Weekly Gauntlet</span>
-          <span className="block text-xs" style={{ color: 'var(--text-dim)' }}>
-            7 games · one total · resets Monday
+          <p className="text-4xl lg:text-5xl">🎯</p>
+          <h2 className="mt-2 text-xl font-extrabold lg:text-3xl">DAILY MYSTERY</h2>
+          <p className="mt-1 text-sm" style={{ color: 'var(--text-dim)' }}>
+            Everyone on Earth gets the same challenge
+          </p>
+          <span
+            className="btn btn-primary mt-4 inline-block px-8 py-2.5 text-sm lg:self-center"
+            style={dailyDone ? { background: 'var(--surface-2)', color: 'var(--text-dim)' } : undefined}
+          >
+            {dailyDone ? `Played ✓ — ${profile.dailyResults[utcDateKey()].score} pts` : 'PLAY'}
           </span>
-        </span>
-        <span className="text-xs" style={{ color: 'var(--accent)' }}>
-          →
-        </span>
-      </Link>
+        </Link>
 
-      {/* Modes */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/play?mode=vs_ai" className="card p-4">
+        <Link
+          href="/weekly"
+          className="card flex items-center gap-3 p-4 lg:flex-col lg:justify-center lg:gap-2 lg:p-6 lg:text-center"
+        >
+          <span className="text-2xl lg:text-4xl">🏁</span>
+          <span className="flex-1 lg:flex-none">
+            <span className="block font-bold lg:text-lg">Weekly Gauntlet</span>
+            <span className="block text-xs" style={{ color: 'var(--text-dim)' }}>
+              7 games · one total · resets Monday
+            </span>
+          </span>
+          <span className="text-xs" style={{ color: 'var(--accent)' }}>
+            →
+          </span>
+        </Link>
+      </div>
+
+      {/* Modes: 2-up on phones, one row of 4 on desktop */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Link href="/play?mode=vs_ai" className="card p-4 lg:p-5">
           <p className="text-2xl">🤖</p>
           <p className="mt-1 font-bold">AI Battle</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
             Race an AI mind
           </p>
         </Link>
-        <Link href="/play" className="card p-4">
+        <Link href="/play" className="card p-4 lg:p-5">
           <p className="text-2xl">🧩</p>
           <p className="mt-1 font-bold">Play Solo</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
             You vs the puzzle
           </p>
         </Link>
-      </div>
-
-      {/* Multiplayer */}
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/party" className="card p-4">
+        <Link href="/party" className="card p-4 lg:p-5">
           <p className="text-2xl">🎪</p>
           <p className="mt-1 font-bold">Party Mode</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
             Code or Mystery — 2–8 players
           </p>
         </Link>
-        <Link href="/online" className="card p-4">
+        <Link href="/online" className="card p-4 lg:p-5">
           <p className="text-2xl">🌎</p>
           <p className="mt-1 font-bold">Live Race</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>

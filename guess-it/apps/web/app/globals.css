@@ -59,6 +59,22 @@ h3,
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Responsive shell: app-width column on phones, roomy layouts on desktop.
+   Pages opt into the extra-wide grid with <main className="wide">. */
+main {
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
+@media (min-width: 1024px) {
+  main {
+    max-width: 680px;
+  }
+  main.wide {
+    max-width: 1120px;
+  }
+}
+
 .card {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 45%), var(--surface);
   border: 1px solid var(--border);

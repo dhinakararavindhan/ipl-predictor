@@ -88,7 +88,12 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
     (`services/realtime`: server-authoritative WebSocket server reusing the engine, in-memory
     rooms, no database; walkover on disconnect, rematch built in). Needs the realtime server
     deployed — see DISTRIBUTION.md.
-  - *Random matchmaking / ranked:* Phase 3 — needs accounts + persistence (the full backend).
+  - *Quick Match (web + PWA):* 🎲 race a random opponent the moment they hit the button —
+    **Elo-rated** (K=32 from 1000) for token-authenticated players; quits cost rating.
+  - *🎪 Party Mode — Code Setter (web + PWA, 2–8 players):* the original parlor game — one
+    player secretly sets a 5-digit code, everyone else takes turns cracking it on a shared
+    board, each on their own phone. Crack it and you win; outlast the room and the Setter
+    wins. Rematches rotate the setter.
 - **Achievements:** First Guess, Code Breaker, Detective, Number Wizard, Perfect, Lightning,
   Streak Master, Legend.
 - **Privacy:** everything stored locally (localStorage / AsyncStorage); export + delete built in.

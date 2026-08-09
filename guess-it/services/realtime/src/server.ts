@@ -16,6 +16,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { randomUUID } from 'node:crypto';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { RoomManager, type Player } from './rooms.js';
+import { PartyManager, type PartyPlayer } from './party.js';
 import type { ClientMsg, ServerMsg } from './protocol.js';
 import { createStorage } from './storage.js';
 import { DailyApi } from './dailyapi.js';
@@ -30,7 +31,11 @@ const ALLOWED = (process.env.ALLOWED_ORIGIN ?? '')
 const storage = await createStorage();
 const daily = new DailyApi(storage);
 const manager = new RoomManager(Math.random, storage);
-setInterval(() => manager.sweep(), 5 * 60 * 1000).unref();
+const party = new PartyManager();
+setInterval(() => {
+  manager.sweep();
+  party.sweep();
+}, 5 * 60 * 1000).unref();
 
 function sanitizeName(name: unknown): string {
   return (
@@ -179,6 +184,7 @@ wss.on('connection', (ws: WebSocket, req) => {
     if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
   };
   const player: Player = { id, name: 'Player', send };
+  const partyPlayer: PartyPlayer = { id, name: 'Player', send, guessesLeft: 0 };
 
   // basic per-connection rate limit: 20 messages/second
   let bucket = 20;
@@ -232,6 +238,27 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         case 'leave':
           manager.leave(id);
+          party.leave(id);
+          break;
+        case 'party_create':
+          partyPlayer.name = sanitizeName(msg.name);
+          party.create(partyPlayer);
+          break;
+        case 'party_join':
+          partyPlayer.name = sanitizeName(msg.name);
+          party.join(partyPlayer, String(msg.code ?? ''));
+          break;
+        case 'party_start':
+          party.start(id);
+          break;
+        case 'party_setcode':
+          party.setCode(id, String(msg.code ?? ''));
+          break;
+        case 'party_guess':
+          party.guess(id, String(msg.digits ?? ''));
+          break;
+        case 'party_rematch':
+          party.rematch(id);
           break;
       }
     } catch {
@@ -243,6 +270,7 @@ wss.on('connection', (ws: WebSocket, req) => {
     clearInterval(refill);
     clearInterval(heartbeat);
     manager.leave(id);
+    party.leave(id);
   });
 });
 

@@ -7,7 +7,10 @@ workspace is the MVP implementation.
 guess-it/
   packages/
     engine/    Deterministic game engine (TS reference impl of docs/game-engine-spec.md) + tests
-    content/   Seed content: 143 published game definitions across 5 worlds + daily challenge
+    content/   Seed content: 182 published game definitions across 7 worlds + daily challenge
+  services/
+    realtime/  Backend: live races (WS) + guest identity + server-authoritative global
+               daily leaderboard (REST). Pluggable storage: JSON file or Postgres.
   apps/
     web/       Next.js 16 web app — installable PWA, all 4 live mechanics, AI battles,
                challenge links, daily, profile
@@ -62,14 +65,17 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
 - **Mechanics:** Crack the Code (5-digit), Clue Guess, Higher/Lower, Quick Pick (multiple choice).
   Image Reveal is engine-complete but content-gated until a licensed image library exists
   (Content Model §4).
-- **Worlds:** Actors, Movies, Heroes, Numbers, Anything (chaos mode).
+- **Worlds:** Actors, Movies, Heroes, Numbers, Emoji Riddles, Cricket 🏏 (legends, records
+  & IPL fever), Anything (chaos mode).
 - **AI Battle:** Detective / Calculator / Machine at Rookie→Hard — candidate-elimination play for
   the code game, clue-by-clue solve rolls for knowledge games, human-paced thinking, post-game
   "how it solved it" replay.
 - **Progression:** XP + levels, daily streaks, achievements, game history, profile, score
   breakdowns.
-- **Daily Mystery:** deterministic shared puzzle rotating at 00:00 UTC — same answer for every
-  player with no server required.
+- **Daily Mystery:** deterministic shared puzzle rotating at 00:00 UTC. With the backend
+  deployed it becomes **server-authoritative with a 🌍 global leaderboard** — the only way
+  onto the board is playing through the server's engine (no score forgery). Without the
+  backend it still works locally.
 - **Multiplayer:**
   - *Pass & Play (web + mobile):* 👥 2–4 players on one device alternate guesses on Crack the
     Code or Higher/Lower — first correct guess wins. Party mode: no hints, no XP, pure bragging
@@ -83,9 +89,20 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
     (`services/realtime`: server-authoritative WebSocket server reusing the engine, in-memory
     rooms, no database; walkover on disconnect, rematch built in). Needs the realtime server
     deployed — see DISTRIBUTION.md.
-  - *Random matchmaking / ranked:* Phase 3 — needs accounts + persistence (the full backend).
+  - *Quick Match (web + PWA):* 🎲 race a random opponent the moment they hit the button —
+    **Elo-rated** (K=32 from 1000) for token-authenticated players; quits cost rating.
+  - *🎪 Party Mode (web + PWA, 2–8 players):* everyone on their own phone, server-refereed,
+    two round types — **🔢 Code Setter** (one player secretly sets a 5-digit code, the room
+    takes turns cracking it on a shared exact/misplaced board) and **🕵️ Mystery** (the
+    Setter picks a secret star/movie/thing from the catalog, the room takes turns naming
+    it, and every 3 wrong guesses auto-reveals the next clue). 45-second turn timer —
+    snooze and that guess is forfeited — plus a scoreboard across rounds (crack it +3,
+    Setter survives everyone +2), live emoji reactions relayed to every phone
+    (server-validated, 1/sec per player), and Party achievements. Rematches rotate the
+    Setter.
 - **Achievements:** First Guess, Code Breaker, Detective, Number Wizard, Perfect, Lightning,
-  Streak Master, Legend.
+  Streak Master, Duelist, Party Animal, Mastermind, Globetrotter, Daily Devotee, Gauntlet
+  Runner, Legend.
 - **Privacy:** everything stored locally (localStorage / AsyncStorage); export + delete built in.
 
 ## Known deviations from the spec set (intentional, tracked)

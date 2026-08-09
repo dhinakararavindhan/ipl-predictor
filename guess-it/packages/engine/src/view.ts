@@ -29,7 +29,9 @@ export interface PlayerView {
 
 export function playerView(state: GameState, def: GameDefinition): PlayerView {
   const v: PlayerView = {
-    defId: state.defId,
+    // R-1.4: definition ids often contain the answer slug (e.g. "her-hulk"),
+    // so they are masked until the game is over.
+    defId: state.status === 'ACTIVE' ? 'hidden' : state.defId,
     mechanic: state.mechanic,
     world: state.world,
     difficulty: state.difficulty,

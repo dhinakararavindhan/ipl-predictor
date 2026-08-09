@@ -61,6 +61,20 @@ export default function Home() {
         </span>
       </Link>
 
+      {/* Weekly Gauntlet */}
+      <Link href="/weekly" className="card flex items-center gap-3 p-4">
+        <span className="text-2xl">🏁</span>
+        <span className="flex-1">
+          <span className="block font-bold">Weekly Gauntlet</span>
+          <span className="block text-xs" style={{ color: 'var(--text-dim)' }}>
+            7 games · one total · resets Monday
+          </span>
+        </span>
+        <span className="text-xs" style={{ color: 'var(--accent)' }}>
+          →
+        </span>
+      </Link>
+
       {/* Modes */}
       <div className="grid grid-cols-2 gap-3">
         <Link href="/play?mode=vs_ai" className="card p-4">
@@ -81,11 +95,11 @@ export default function Home() {
 
       {/* Multiplayer */}
       <div className="grid grid-cols-2 gap-3">
-        <Link href="/play?mode=duel" className="card p-4">
-          <p className="text-2xl">👥</p>
-          <p className="mt-1 font-bold">Pass &amp; Play</p>
+        <Link href="/party" className="card p-4">
+          <p className="text-2xl">🎪</p>
+          <p className="mt-1 font-bold">Party Mode</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
-            Duel friends on one phone
+            Code or Mystery — 2–8 players
           </p>
         </Link>
         <Link href="/online" className="card p-4">
@@ -97,7 +111,8 @@ export default function Home() {
         </Link>
       </div>
       <p className="-mt-1 text-center text-[11px]" style={{ color: 'var(--text-dim)' }}>
-        ⚔️ Tip: finish any game and tap “Challenge a friend” to send them the same puzzle.
+        ⚔️ Tip: “Challenge a friend” on any result sends them your exact puzzle · 👥 Pass &amp;
+        Play lives in the Play menu.
       </p>
 
       {/* Explore */}

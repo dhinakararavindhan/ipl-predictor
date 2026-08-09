@@ -14,7 +14,7 @@ export type DigitMark = 'EXACT' | 'MISPLACED' | 'MISS';
 export type HintType = 'REVEAL_DIGIT' | 'FIRST_LETTER' | 'SHRINK_RANGE' | 'FIFTY_FIFTY';
 
 export type AiLevel = 'ROOKIE' | 'EASY' | 'MEDIUM' | 'HARD';
-export type AiCharacterId = 'detective' | 'calculator' | 'machine';
+export type AiCharacterId = 'detective' | 'calculator' | 'machine' | 'professor' | 'trickster';
 
 export interface AnswerSpec {
   name: string;

@@ -1,14 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { setSoundEnabled, soundEnabled } from '@/lib/sound';
 import { useProfile, useSession } from '@/lib/store';
 
 export default function SettingsPage() {
   const router = useRouter();
   const [confirmText, setConfirmText] = useState('');
   const [confirming, setConfirming] = useState(false);
+  const [sound, setSound] = useState(true);
+  useEffect(() => setSound(soundEnabled()), []);
   const resetAll = useProfile((s) => s.resetAll);
   const clearSession = useSession((s) => s.clear);
 
@@ -36,6 +39,25 @@ export default function SettingsPage() {
           You&apos;re playing as a guest. Progress lives on this device. Sign-in with progress
           sync arrives with the online release.
         </p>
+      </div>
+
+      <div className="card p-4">
+        <h2 className="text-sm font-bold">Sound & feel</h2>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
+            Sound effects & vibration
+          </p>
+          <button
+            className="chip px-4 py-1.5 text-xs font-semibold"
+            data-active={sound}
+            onClick={() => {
+              setSound(!sound);
+              setSoundEnabled(!sound);
+            }}
+          >
+            {sound ? 'ON' : 'OFF'}
+          </button>
+        </div>
       </div>
 
       <div className="card p-4">

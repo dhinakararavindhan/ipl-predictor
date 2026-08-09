@@ -66,6 +66,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'perfect', name: 'Perfect', emoji: '💎', blurb: 'Win without hints or wrong guesses' },
   { key: 'lightning', name: 'Lightning', emoji: '⚡', blurb: 'Win in under 30 seconds' },
   { key: 'streak_master', name: 'Streak Master', emoji: '🔥', blurb: 'Reach a 7-day streak' },
+  { key: 'globetrotter', name: 'Globetrotter', emoji: '🌍', blurb: 'Win in 5 different worlds' },
+  { key: 'daily_devotee', name: 'Daily Devotee', emoji: '🎯', blurb: 'Complete 7 Daily Mysteries' },
   { key: 'legend', name: 'Legend', emoji: '👑', blurb: 'Win 100 games' },
 ];
 
@@ -160,6 +162,12 @@ export const useProfile = create<ProfileState>()(
         grant('perfect', won && opts.perfect);
         grant('lightning', won && entry.durationMs <= 30000);
         grant('streak_master', streak.current >= 7);
+        const wonWorlds = new Set(p.history.filter((h) => h.outcome === 'WON').map((h) => h.world));
+        if (won) wonWorlds.add(entry.world);
+        grant('globetrotter', wonWorlds.size >= 5);
+        const dailyCount =
+          Object.keys(p.dailyResults).length + (entry.daily && !p.dailyResults[entry.daily] ? 1 : 0);
+        grant('daily_devotee', dailyCount >= 7);
         grant('legend', wins >= 100);
 
         set({

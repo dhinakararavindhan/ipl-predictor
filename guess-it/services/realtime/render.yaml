@@ -11,3 +11,10 @@ services:
     envVars:
       - key: PORT
         value: 8787
+      - key: AUTH_SECRET
+        generateValue: true
+      # For real persistence across deploys, attach a free Postgres
+      # (Neon/Supabase) and set DATABASE_URL here; otherwise scores live in a
+      # JSON file that resets when the instance is rebuilt.
+      # - key: DATABASE_URL
+      #   sync: false

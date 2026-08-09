@@ -14,12 +14,21 @@ export interface RaceConfig {
 
 // ---- client → server ----
 export type ClientMsg =
-  | { type: 'create'; name: string; config: RaceConfig }
-  | { type: 'join'; code: string; name: string }
+  | { type: 'create'; name: string; config: RaceConfig; token?: string }
+  | { type: 'join'; code: string; name: string; token?: string }
+  | { type: 'quickmatch'; name: string; token?: string }
   | { type: 'start' } // host only, requires 2 players
   | { type: 'action'; action: 'guess' | 'advance' | 'hint'; payload?: string }
   | { type: 'rematch' }
-  | { type: 'leave' };
+  | { type: 'leave' }
+  // Party Mode — Code Setter (one human sets the code, the room guesses)
+  | { type: 'party_create'; name: string; mode?: 'code' | 'mystery' }
+  | { type: 'party_join'; code: string; name: string }
+  | { type: 'party_start' }
+  | { type: 'party_setcode'; code: string }
+  | { type: 'party_guess'; digits: string }
+  | { type: 'party_react'; emoji: string }
+  | { type: 'party_rematch' };
 
 // ---- server → client ----
 export interface LobbyPlayer {
@@ -36,6 +45,7 @@ export interface OpponentProgress {
 }
 
 export type ServerMsg =
+  | { type: 'searching' }
   | { type: 'lobby'; code: string; players: LobbyPlayer[]; config: RaceConfig; canStart: boolean }
   | { type: 'game_start'; view: PlayerView; opponentName: string }
   | { type: 'view'; view: PlayerView } // your own state after your action
@@ -44,9 +54,54 @@ export type ServerMsg =
       type: 'game_over';
       outcome: 'WIN' | 'LOSS' | 'DRAW' | 'WALKOVER';
       view: PlayerView; // terminal — includes the answer via result
-      you: { name: string; score: number; attemptsUsed: number };
-      opponent: { name: string; score: number; attemptsUsed: number; finished: boolean };
+      you: { name: string; score: number; attemptsUsed: number; rating?: number; ratingDelta?: number };
+      opponent: { name: string; score: number; attemptsUsed: number; finished: boolean; rating?: number };
     }
   | { type: 'opponent_left' }
   | { type: 'rematch_offer'; from: string }
+  // Party Mode
+  | {
+      type: 'party_lobby';
+      code: string;
+      mode: 'code' | 'mystery';
+      canStart: boolean;
+      players: { name: string; isHost: boolean; isYou: boolean; isSetter: boolean }[];
+      scores: { name: string; points: number }[];
+    }
+  | {
+      type: 'party_setting';
+      mode: 'code' | 'mystery';
+      setterName: string;
+      youAreSetter: boolean;
+      /** mystery mode, setter only: catalog answers grouped by world */
+      choices?: Record<string, string[]>;
+    }
+  | {
+      type: 'party_state';
+      mode: 'code' | 'mystery';
+      board: { by: string; digits: string; perDigit: ('EXACT' | 'MISPLACED' | 'MISS')[]; exact: number; misplaced: number; miss: number }[];
+      events: { kind: 'guess' | 'clue'; by?: string; text: string }[];
+      setterName: string;
+      turnName: string;
+      yourTurn: boolean;
+      youAreSetter: boolean;
+      turnMs: number;
+      notice?: string;
+      guesses: { name: string; left: number }[];
+      scores: { name: string; points: number }[];
+    }
+  | {
+      type: 'party_over';
+      mode: 'code' | 'mystery';
+      winner: string | null;
+      reason: 'cracked' | 'exhausted' | 'setter_left' | 'not_enough_players';
+      secret: string | null;
+      setterName: string;
+      board: { by: string; digits: string; perDigit: ('EXACT' | 'MISPLACED' | 'MISS')[]; exact: number; misplaced: number; miss: number }[];
+      events: { kind: 'guess' | 'clue'; by?: string; text: string }[];
+      scores: { name: string; points: number }[];
+      isHost: boolean;
+    }
+  | { type: 'party_left'; name: string }
+  | { type: 'party_reaction'; by: string; emoji: string }
   | { type: 'error'; code: string; message: string };

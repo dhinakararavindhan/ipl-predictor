@@ -46,7 +46,7 @@ describe('live race rooms', () => {
     expect(JSON.stringify(gsArun.view)).not.toContain(secret);
   });
 
-  it('guesses stream to the opponent as progress, not content', () => {
+  it('guesses stream to the opponent as progress, not content', async () => {
     const mgr = new RoomManager();
     const riya = makePlayer('Riya');
     const arun = makePlayer('Arun');
@@ -56,14 +56,14 @@ describe('live race rooms', () => {
     const secret = generateSecret(mgr._room(room.code)!.seed!);
     const wrong = secret === '01234' ? '56789' : '01234';
 
-    mgr.action(riya.id, 'guess', wrong);
+    await mgr.action(riya.id, 'guess', wrong);
     const progress = last(arun, 'opponent')!;
     expect(progress.progress.attemptsUsed).toBe(1);
     expect(progress.progress.finished).toBe(false);
     expect(JSON.stringify(progress)).not.toContain(wrong); // counts only, never digits
   });
 
-  it('first correct guess wins the race; loser is frozen with LOSS', () => {
+  it('first correct guess wins the race; loser is frozen with LOSS', async () => {
     const mgr = new RoomManager();
     const riya = makePlayer('Riya');
     const arun = makePlayer('Arun');
@@ -72,7 +72,7 @@ describe('live race rooms', () => {
     mgr.start(riya.id);
     const secret = generateSecret(mgr._room(room.code)!.seed!);
 
-    mgr.action(arun.id, 'guess', secret);
+    await mgr.action(arun.id, 'guess', secret);
     const arunOver = last(arun, 'game_over')!;
     const riyaOver = last(riya, 'game_over')!;
     expect(arunOver.outcome).toBe('WIN');
@@ -83,7 +83,7 @@ describe('live race rooms', () => {
     expect(mgr._room(room.code)!.status).toBe('over');
   });
 
-  it('invalid guesses return typed errors and cost nothing', () => {
+  it('invalid guesses return typed errors and cost nothing', async () => {
     const mgr = new RoomManager();
     const riya = makePlayer('Riya');
     const arun = makePlayer('Arun');
@@ -91,13 +91,13 @@ describe('live race rooms', () => {
     mgr.join(arun, room.code);
     mgr.start(riya.id);
 
-    mgr.action(riya.id, 'guess', '11111');
+    await mgr.action(riya.id, 'guess', '11111');
     const err = last(riya, 'error')!;
     expect(err.code).toBe('INVALID_GUESS_FORMAT');
     expect(arun.inbox.find((m) => m.type === 'opponent')).toBeUndefined();
   });
 
-  it('mid-race disconnect gives the opponent a walkover', () => {
+  it('mid-race disconnect gives the opponent a walkover', async () => {
     const mgr = new RoomManager();
     const riya = makePlayer('Riya');
     const arun = makePlayer('Arun');
@@ -106,12 +106,13 @@ describe('live race rooms', () => {
     mgr.start(riya.id);
 
     mgr.leave(arun.id);
+    await new Promise((r) => setTimeout(r, 10)); // walkover delivery is async (ratings path)
     const over = last(riya, 'game_over')!;
     expect(over.outcome).toBe('WALKOVER');
     expect(over.opponent.name).toBe('Arun');
   });
 
-  it('rematch requires both players and relaunches with a fresh puzzle', () => {
+  it('rematch requires both players and relaunches with a fresh puzzle', async () => {
     const mgr = new RoomManager();
     const riya = makePlayer('Riya');
     const arun = makePlayer('Arun');
@@ -120,7 +121,7 @@ describe('live race rooms', () => {
     mgr.start(riya.id);
     const firstSeed = mgr._room(room.code)!.seed;
     const secret = generateSecret(firstSeed!);
-    mgr.action(arun.id, 'guess', secret);
+    await mgr.action(arun.id, 'guess', secret);
 
     mgr.rematch(riya.id);
     expect(last(arun, 'rematch_offer')!.from).toBe('Riya');

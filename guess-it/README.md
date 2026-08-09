@@ -90,10 +90,13 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
     deployed — see DISTRIBUTION.md.
   - *Quick Match (web + PWA):* 🎲 race a random opponent the moment they hit the button —
     **Elo-rated** (K=32 from 1000) for token-authenticated players; quits cost rating.
-  - *🎪 Party Mode — Code Setter (web + PWA, 2–8 players):* the original parlor game — one
-    player secretly sets a 5-digit code, everyone else takes turns cracking it on a shared
-    board, each on their own phone. Crack it and you win; outlast the room and the Setter
-    wins. Rematches rotate the setter.
+  - *🎪 Party Mode (web + PWA, 2–8 players):* everyone on their own phone, server-refereed,
+    two round types — **🔢 Code Setter** (one player secretly sets a 5-digit code, the room
+    takes turns cracking it on a shared exact/misplaced board) and **🕵️ Mystery** (the
+    Setter picks a secret star/movie/thing from the catalog, the room takes turns naming
+    it, and every 3 wrong guesses auto-reveals the next clue). 45-second turn timer —
+    snooze and that guess is forfeited — plus a scoreboard across rounds (crack it +3,
+    Setter survives everyone +2). Rematches rotate the Setter.
 - **Achievements:** First Guess, Code Breaker, Detective, Number Wizard, Perfect, Lightning,
   Streak Master, Legend.
 - **Privacy:** everything stored locally (localStorage / AsyncStorage); export + delete built in.

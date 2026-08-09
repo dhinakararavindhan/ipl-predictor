@@ -99,7 +99,7 @@ export default function Home() {
           <p className="text-2xl">🎪</p>
           <p className="mt-1 font-bold">Party Mode</p>
           <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
-            One sets the code, 2–8 crack it
+            Code or Mystery — 2–8 players
           </p>
         </Link>
         <Link href="/online" className="card p-4">

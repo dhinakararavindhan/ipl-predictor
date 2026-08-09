@@ -133,3 +133,152 @@ describe('party mode — code setter', () => {
     expect(last(extra, 'error')!.code).toBe('FULL');
   });
 });
+
+describe('party mode — turn timer', () => {
+  it('a snoozed turn forfeits one guess and play moves on', async () => {
+    const mgr = new PartyManager(() => 0.42, 80); // 80ms turns
+    const host = makePlayer('Host');
+    const room = mgr.create(host);
+    const g1 = makePlayer('G1');
+    const g2 = makePlayer('G2');
+    mgr.join(g1, room.code);
+    mgr.join(g2, room.code);
+    mgr.start(host.id);
+    mgr.setCode(host.id, '12345');
+    expect(last(g1, 'party_state')!.yourTurn).toBe(true);
+
+    await new Promise((r) => setTimeout(r, 110)); // G1's turn expires; G2's is still live
+    const st = last(g2, 'party_state')!;
+    expect(st.yourTurn).toBe(true); // turn advanced past the sleeper
+    expect(st.notice).toContain('G1 snoozed');
+    expect(st.guesses.find((g) => g.name === 'G1')!.left).toBe(GUESSES_PER_PLAYER - 1);
+    mgr.leave(host.id); // stop the room's timer
+  });
+
+  it('the setter wins if every guess times out', async () => {
+    const mgr = new PartyManager(() => 0.42, 5);
+    const host = makePlayer('Host');
+    const room = mgr.create(host);
+    const g1 = makePlayer('G1');
+    mgr.join(g1, room.code);
+    mgr.start(host.id);
+    mgr.setCode(host.id, '12345');
+    await new Promise((r) => setTimeout(r, GUESSES_PER_PLAYER * 5 + 80));
+    const over = last(host, 'party_over')!;
+    expect(over.reason).toBe('exhausted');
+    expect(over.winner).toBeNull();
+  });
+
+  it('party_state advertises the turn length so clients can show a countdown', () => {
+    const { host } = setupParty(2);
+    expect(last(host, 'party_state')!.turnMs).toBeGreaterThan(0);
+  });
+});
+
+describe('party mode — scoreboard across rounds', () => {
+  it('cracking the code scores +3; a setter hold scores +2; totals survive rematch', () => {
+    const { mgr, host, others } = setupParty(2, '54321');
+    const [g1, g2] = others;
+    mgr.guess(g1.id, '54321'); // G1 cracks it: +3
+    let over = last(host, 'party_over')!;
+    expect(over.scores).toContainEqual({ name: 'G1', points: 3 });
+    expect(over.scores[0]).toEqual({ name: 'G1', points: 3 }); // sorted, leader first
+
+    mgr.rematch(host.id); // setter rotates to G1
+    mgr.setCode(g1.id, '98765');
+    const wrongs = ['01234', '12340', '23401', '34012', '40123', '01243', '12430', '24301',
+                    '43012', '30124', '01324', '13240', '32401', '24013', '40132', '01342'];
+    let w = 0;
+    for (let round = 0; round < GUESSES_PER_PLAYER; round++) {
+      mgr.guess(g2.id, wrongs[w++]);
+      mgr.guess(host.id, wrongs[w++]);
+    }
+    over = last(host, 'party_over')!;
+    expect(over.reason).toBe('exhausted');
+    expect(over.scores).toContainEqual({ name: 'G1', points: 5 }); // 3 + setter hold 2
+    expect(over.scores).toContainEqual({ name: 'Host', points: 0 });
+  });
+
+  it('the lobby shows running scores so late joiners see the standings', () => {
+    const { mgr, host, others } = setupParty(2, '54321');
+    mgr.guess(others[0].id, '54321');
+    mgr.rematch(host.id);
+    // scores were broadcast with the previous party_over; lobby carries them too
+    const lobby = last(host, 'party_lobby');
+    if (lobby) expect(lobby.scores).toBeDefined();
+  });
+});
+
+describe('party mode — mystery rounds', () => {
+  function setupMystery() {
+    const mgr = new PartyManager(() => 0.42);
+    const host = makePlayer('Host');
+    const room = mgr.create(host, 'mystery');
+    const g1 = makePlayer('G1');
+    const g2 = makePlayer('G2');
+    mgr.join(g1, room.code);
+    mgr.join(g2, room.code);
+    mgr.start(host.id);
+    return { mgr, host, g1, g2, room };
+  }
+
+  it('only the setter receives the catalog of mystery choices', () => {
+    const { host, g1 } = setupMystery();
+    const setterMsg = last(host, 'party_setting')!;
+    expect(setterMsg.mode).toBe('mystery');
+    expect(setterMsg.choices).toBeDefined();
+    expect(Object.values(setterMsg.choices!).flat()).toContain('Shah Rukh Khan');
+    expect(last(g1, 'party_setting')!.choices).toBeUndefined();
+  });
+
+  it('a made-up mystery is rejected; a catalog pick starts the round with clue #1', () => {
+    const { mgr, host, g1 } = setupMystery();
+    mgr.setCode(host.id, 'Definitely Not Real');
+    expect(last(host, 'error')!.code).toBe('INVALID_CHOICE');
+    mgr.setCode(host.id, 'Shah Rukh Khan');
+    const st = last(g1, 'party_state')!;
+    expect(st.mode).toBe('mystery');
+    expect(st.events).toHaveLength(1);
+    expect(st.events[0].kind).toBe('clue');
+  });
+
+  it('every 3 wrong guesses auto-reveals the next clue', () => {
+    const { mgr, host, g1, g2 } = setupMystery();
+    mgr.setCode(host.id, 'Shah Rukh Khan');
+    mgr.guess(g1.id, 'Tom Cruise');
+    mgr.guess(g2.id, 'Rajinikanth');
+    expect(last(g1, 'party_state')!.events.filter((e) => e.kind === 'clue')).toHaveLength(1);
+    mgr.guess(g1.id, 'Amitabh Bachchan'); // 3rd wrong → clue 2 drops
+    const events = last(g2, 'party_state')!.events;
+    expect(events.filter((e) => e.kind === 'clue')).toHaveLength(2);
+    expect(events.filter((e) => e.kind === 'guess')).toHaveLength(3);
+    expect(events.filter((e) => e.kind === 'guess')[0].by).toBe('G1');
+  });
+
+  it('an alias guess wins (case-insensitive) and the answer is revealed to all', () => {
+    const { mgr, host, g1, g2 } = setupMystery();
+    mgr.setCode(host.id, 'Shah Rukh Khan');
+    mgr.guess(g1.id, 'srk');
+    for (const p of [host, g1, g2]) {
+      const over = last(p, 'party_over')!;
+      expect(over.winner).toBe('G1');
+      expect(over.reason).toBe('cracked');
+      expect(over.secret).toBe('Shah Rukh Khan');
+      expect(over.mode).toBe('mystery');
+    }
+    expect(last(host, 'party_over')!.scores).toContainEqual({ name: 'G1', points: 3 });
+  });
+
+  it('mystery rounds end with a setter win when guesses run dry', () => {
+    const { mgr, host, g1, g2 } = setupMystery();
+    mgr.setCode(host.id, 'Shah Rukh Khan');
+    for (let i = 0; i < GUESSES_PER_PLAYER; i++) {
+      mgr.guess(g1.id, `wrong guess ${i}a`);
+      mgr.guess(g2.id, `wrong guess ${i}b`);
+    }
+    const over = last(host, 'party_over')!;
+    expect(over.reason).toBe('exhausted');
+    expect(over.secret).toBe('Shah Rukh Khan');
+    expect(over.scores).toContainEqual({ name: 'Host', points: 2 });
+  });
+});

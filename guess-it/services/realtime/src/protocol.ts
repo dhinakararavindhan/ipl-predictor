@@ -22,7 +22,7 @@ export type ClientMsg =
   | { type: 'rematch' }
   | { type: 'leave' }
   // Party Mode — Code Setter (one human sets the code, the room guesses)
-  | { type: 'party_create'; name: string }
+  | { type: 'party_create'; name: string; mode?: 'code' | 'mystery' }
   | { type: 'party_join'; code: string; name: string }
   | { type: 'party_start' }
   | { type: 'party_setcode'; code: string }
@@ -62,26 +62,43 @@ export type ServerMsg =
   | {
       type: 'party_lobby';
       code: string;
+      mode: 'code' | 'mystery';
       canStart: boolean;
       players: { name: string; isHost: boolean; isYou: boolean; isSetter: boolean }[];
+      scores: { name: string; points: number }[];
     }
-  | { type: 'party_setting'; setterName: string; youAreSetter: boolean }
+  | {
+      type: 'party_setting';
+      mode: 'code' | 'mystery';
+      setterName: string;
+      youAreSetter: boolean;
+      /** mystery mode, setter only: catalog answers grouped by world */
+      choices?: Record<string, string[]>;
+    }
   | {
       type: 'party_state';
+      mode: 'code' | 'mystery';
       board: { by: string; digits: string; perDigit: ('EXACT' | 'MISPLACED' | 'MISS')[]; exact: number; misplaced: number; miss: number }[];
+      events: { kind: 'guess' | 'clue'; by?: string; text: string }[];
       setterName: string;
       turnName: string;
       yourTurn: boolean;
       youAreSetter: boolean;
+      turnMs: number;
+      notice?: string;
       guesses: { name: string; left: number }[];
+      scores: { name: string; points: number }[];
     }
   | {
       type: 'party_over';
+      mode: 'code' | 'mystery';
       winner: string | null;
       reason: 'cracked' | 'exhausted' | 'setter_left' | 'not_enough_players';
       secret: string | null;
       setterName: string;
       board: { by: string; digits: string; perDigit: ('EXACT' | 'MISPLACED' | 'MISS')[]; exact: number; misplaced: number; miss: number }[];
+      events: { kind: 'guess' | 'clue'; by?: string; text: string }[];
+      scores: { name: string; points: number }[];
       isHost: boolean;
     }
   | { type: 'party_left'; name: string }

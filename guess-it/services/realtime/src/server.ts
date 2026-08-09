@@ -242,7 +242,7 @@ wss.on('connection', (ws: WebSocket, req) => {
           break;
         case 'party_create':
           partyPlayer.name = sanitizeName(msg.name);
-          party.create(partyPlayer);
+          party.create(partyPlayer, msg.mode === 'mystery' ? 'mystery' : 'code');
           break;
         case 'party_join':
           partyPlayer.name = sanitizeName(msg.name);

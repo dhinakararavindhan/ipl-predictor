@@ -6,20 +6,15 @@ on:
     paths: ['guess-it/**', '.github/workflows/deploy-web.yml']
   workflow_dispatch:
 
-# contents: read is enough now — we deploy via the Pages artifact flow, and
-# configure-pages (enablement: true) creates the Pages site on first run so
-# no manual Settings → Pages toggle is needed.
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,10 +23,6 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: guess-it/apps/web/package-lock.json
-      - name: Enable GitHub Pages (first run only)
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - run: npm ci
         working-directory: guess-it/apps/web
       - run: npm run build
@@ -44,16 +35,11 @@ jobs:
           # (guess-it/DISTRIBUTION.md). Empty = features show a friendly
           # "server not connected" note.
           NEXT_PUBLIC_REALTIME_URL: ${{ vars.REALTIME_URL || '' }}
-      - uses: actions/upload-pages-artifact@v3
+      # Publish the static site to the gh-pages branch. One-time owner step to
+      # go live (workflow tokens cannot create the Pages site — that needs
+      # repo admin): Settings → Pages → Deploy from a branch → gh-pages → /.
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          path: guess-it/apps/web/out
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: guess-it/apps/web/out
+          commit_message: 'Deploy GUESS IT ${{ github.sha }}'

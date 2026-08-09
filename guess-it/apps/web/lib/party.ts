@@ -33,6 +33,15 @@ export interface PartyScore {
   points: number;
 }
 
+export interface PartyReaction {
+  id: number;
+  by: string;
+  emoji: string;
+}
+
+/** Mirror of the server's PARTY_REACTIONS catalog. */
+export const PARTY_REACTIONS = ['😂', '🔥', '😱', '👏', '🤯', '😭'];
+
 interface PartyState {
   phase: 'idle' | 'connecting' | 'lobby' | 'setting' | 'guessing' | 'over';
   mode: PartyMode;
@@ -61,10 +70,12 @@ interface PartyState {
     isHost: boolean;
   } | null;
   notice: string | null;
+  reactions: PartyReaction[];
   error: string | null;
   errorNonce: number;
 
   createParty: (name: string, mode: PartyMode) => void;
+  react: (emoji: string) => void;
   joinParty: (name: string, code: string) => void;
   start: () => void;
   setCode: (code: string) => void;
@@ -172,6 +183,11 @@ export const useParty = create<PartyState>((set, get) => {
         case 'party_left':
           set({ notice: `${m.name} left the party.` });
           break;
+        case 'party_reaction':
+          set((s) => ({
+            reactions: [...s.reactions, { id: (s.reactions.at(-1)?.id ?? 0) + 1, by: m.by, emoji: m.emoji }].slice(-6),
+          }));
+          break;
         case 'error':
           fail(m.message);
           break;
@@ -198,10 +214,12 @@ export const useParty = create<PartyState>((set, get) => {
     scores: [],
     over: null,
     notice: null,
+    reactions: [],
     error: null,
     errorNonce: 0,
 
     createParty: (name, mode) => connect(() => send({ type: 'party_create', name, mode })),
+    react: (emoji) => send({ type: 'party_react', emoji }),
     joinParty: (name, code) => connect(() => send({ type: 'party_join', name, code })),
     start: () => send({ type: 'party_start' }),
     setCode: (code) => send({ type: 'party_setcode', code }),
@@ -221,6 +239,7 @@ export const useParty = create<PartyState>((set, get) => {
         choices: null,
         over: null,
         notice: null,
+        reactions: [],
         error: null,
       });
     },

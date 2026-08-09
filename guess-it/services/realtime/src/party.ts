@@ -31,7 +31,12 @@ export interface PartyPlayer {
   name: string;
   send: (msg: ServerMsg) => void;
   guessesLeft: number;
+  lastReactAt?: number;
 }
+
+/** The only emoji the server will relay — anything else is dropped. */
+export const PARTY_REACTIONS = ['😂', '🔥', '😱', '👏', '🤯', '😭'];
+const REACT_COOLDOWN_MS = 1000;
 
 export interface BoardRow extends ExactGuessRow {
   by: string;
@@ -307,6 +312,17 @@ export class PartyManager {
 
   private allExhausted(room: PartyRoom): boolean {
     return room.players.every((p, i) => i === room.setterIdx || p.guessesLeft <= 0);
+  }
+
+  /** Relay a quick emoji reaction to the whole room (1/sec per player). */
+  react(playerId: string, emoji: string, now = Date.now()): void {
+    const room = this.byPlayer.get(playerId);
+    if (!room) return;
+    const player = this.playerOf(room, playerId);
+    if (!player || !PARTY_REACTIONS.includes(emoji)) return;
+    if (now - (player.lastReactAt ?? 0) < REACT_COOLDOWN_MS) return;
+    player.lastReactAt = now;
+    for (const p of room.players) p.send({ type: 'party_reaction', by: player.name, emoji });
   }
 
   rematch(playerId: string): void {

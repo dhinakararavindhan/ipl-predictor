@@ -7,7 +7,7 @@ workspace is the MVP implementation.
 guess-it/
   packages/
     engine/    Deterministic game engine (TS reference impl of docs/game-engine-spec.md) + tests
-    content/   Seed content: 160 published game definitions across 5 worlds + daily challenge
+    content/   Seed content: 182 published game definitions across 7 worlds + daily challenge
   services/
     realtime/  Backend: live races (WS) + guest identity + server-authoritative global
                daily leaderboard (REST). Pluggable storage: JSON file or Postgres.
@@ -65,7 +65,8 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
 - **Mechanics:** Crack the Code (5-digit), Clue Guess, Higher/Lower, Quick Pick (multiple choice).
   Image Reveal is engine-complete but content-gated until a licensed image library exists
   (Content Model §4).
-- **Worlds:** Actors, Movies, Heroes, Numbers, Emoji Riddles, Anything (chaos mode).
+- **Worlds:** Actors, Movies, Heroes, Numbers, Emoji Riddles, Cricket 🏏 (legends, records
+  & IPL fever), Anything (chaos mode).
 - **AI Battle:** Detective / Calculator / Machine at Rookie→Hard — candidate-elimination play for
   the code game, clue-by-clue solve rolls for knowledge games, human-paced thinking, post-game
   "how it solved it" replay.
@@ -96,9 +97,12 @@ npm test           # 28 tests: evaluation tables, determinism, no-leakage, scori
     Setter picks a secret star/movie/thing from the catalog, the room takes turns naming
     it, and every 3 wrong guesses auto-reveals the next clue). 45-second turn timer —
     snooze and that guess is forfeited — plus a scoreboard across rounds (crack it +3,
-    Setter survives everyone +2). Rematches rotate the Setter.
+    Setter survives everyone +2), live emoji reactions relayed to every phone
+    (server-validated, 1/sec per player), and Party achievements. Rematches rotate the
+    Setter.
 - **Achievements:** First Guess, Code Breaker, Detective, Number Wizard, Perfect, Lightning,
-  Streak Master, Legend.
+  Streak Master, Duelist, Party Animal, Mastermind, Globetrotter, Daily Devotee, Gauntlet
+  Runner, Legend.
 - **Privacy:** everything stored locally (localStorage / AsyncStorage); export + delete built in.
 
 ## Known deviations from the spec set (intentional, tracked)

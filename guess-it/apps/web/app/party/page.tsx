@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { DigitMark } from '@guess-it/engine';
 import { WORLDS } from '@guess-it/content';
 import { REALTIME_URL } from '@/lib/online';
-import { useParty, type PartyEvent, type PartyScore } from '@/lib/party';
+import { PARTY_REACTIONS, useParty, type PartyEvent, type PartyReaction, type PartyScore } from '@/lib/party';
 import { sfx } from '@/lib/sound';
 import { useProfile } from '@/lib/store';
 import { PartyKeypad } from '@/components/PartyKeypad';
@@ -56,6 +56,43 @@ function TurnCountdown({ turnMs, nonce }: { turnMs: number; nonce: number }) {
       <span className="digits w-8 text-right text-xs font-bold" style={{ color: frac < 0.25 ? 'var(--warn)' : 'var(--text-dim)' }}>
         {secs}s
       </span>
+    </div>
+  );
+}
+
+/** Quick emoji reactions: tap to broadcast; incoming ones float up and fade. */
+function Reactions({ items, onReact }: { items: PartyReaction[]; onReact: (emoji: string) => void }) {
+  const [visible, setVisible] = useState<PartyReaction[]>([]);
+  const seen = useRef(0);
+  useEffect(() => {
+    const fresh = items.filter((r) => r.id > seen.current);
+    if (!fresh.length) return;
+    seen.current = items[items.length - 1].id;
+    setVisible((v) => [...v, ...fresh].slice(-6));
+    const t = setTimeout(() => setVisible((v) => v.filter((r) => !fresh.includes(r))), 2400);
+    return () => clearTimeout(t);
+  }, [items]);
+  return (
+    <div className="relative">
+      {visible.length > 0 && (
+        <div className="pointer-events-none absolute -top-10 left-0 right-0 flex justify-center gap-3">
+          {visible.map((r) => (
+            <span key={r.id} className="pop-in text-center">
+              <span className="block text-2xl">{r.emoji}</span>
+              <span className="block text-[9px] font-bold" style={{ color: 'var(--text-dim)' }}>
+                {r.by}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex justify-center gap-1.5">
+        {PARTY_REACTIONS.map((e) => (
+          <button key={e} className="btn btn-ghost h-10 w-10 text-lg" onClick={() => onReact(e)} aria-label={`React ${e}`}>
+            {e}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -130,6 +167,7 @@ function MysteryGuessInput({ onSubmit, disabled }: { onSubmit: (text: string) =>
 export default function PartyPage() {
   const party = useParty();
   const username = useProfile((s) => s.username);
+  const recordPartyWin = useProfile((s) => s.recordPartyWin);
   const [menu, setMenu] = useState<'menu' | 'join'>('menu');
   const [joinCode, setJoinCode] = useState('');
   const [pickWorld, setPickWorld] = useState<string | null>(null);
@@ -152,6 +190,7 @@ export default function PartyPage() {
   useEffect(() => {
     if (party.phase === 'over' && party.over) {
       const iWon = party.over.winner !== null && party.players.some((p) => p.isYou && p.name === party.over!.winner);
+      if (iWon) recordPartyWin(party.over.mode);
       if (iWon || (party.over.winner === null && party.youAreSetter)) sfx.win();
       else sfx.lose();
     }
@@ -248,6 +287,8 @@ export default function PartyPage() {
           ) : (
             <PartyKeypad label="GUESS" onSubmit={(d) => party.guess(d)} disabled={!party.yourTurn} />
           ))}
+
+        <Reactions items={party.reactions} onReact={(e) => party.react(e)} />
 
         {toast && (
           <p className="shake text-center text-sm" style={{ color: 'var(--warn)' }}>
@@ -387,6 +428,7 @@ export default function PartyPage() {
           </div>
         )}
         {o.mode === 'mystery' ? <MysteryFeed events={party.events} /> : board}
+        <Reactions items={party.reactions} onReact={(e) => party.react(e)} />
         <div className="flex gap-2">
           {o.isHost && (o.reason === 'cracked' || o.reason === 'exhausted') && (
             <button className="btn btn-primary flex-1 py-3 text-sm font-bold" onClick={() => party.rematch()}>

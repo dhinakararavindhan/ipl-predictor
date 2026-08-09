@@ -257,6 +257,9 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'party_guess':
           party.guess(id, String(msg.digits ?? ''));
           break;
+        case 'party_react':
+          party.react(id, String(msg.emoji ?? ''));
+          break;
         case 'party_rematch':
           party.rematch(id);
           break;

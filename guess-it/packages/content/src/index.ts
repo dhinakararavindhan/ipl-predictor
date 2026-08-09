@@ -22,6 +22,7 @@ export const WORLDS: World[] = [
   { id: 'heroes', name: 'Heroes', emoji: '🦸', blurb: 'Marvel, DC, anime & beyond' },
   { id: 'numbers', name: 'Numbers', emoji: '🔢', blurb: 'Codes, years, heights & records' },
   { id: 'emoji', name: 'Emoji Riddles', emoji: '🎭', blurb: 'Decode the emoji, name the thing' },
+  { id: 'cricket', name: 'Cricket', emoji: '🏏', blurb: 'Legends, records & IPL fever' },
   { id: 'anything', name: 'Anything', emoji: '🎲', blurb: 'Chaos mode — it could be anything' },
 ];
 
@@ -108,6 +109,7 @@ export function namespaceFor(world: string): string[] {
     movies: ['Dangal', 'KGF 2', 'Pushpa', 'Avengers: Endgame', 'The Godfather', 'Gladiator', 'Frozen', 'Oppenheimer', 'Barbie', 'Leo'],
     heroes: ['Captain America', 'Black Panther', 'Aquaman', 'Luffy', 'Sailor Moon', 'He-Man', 'Flash', 'Green Lantern', 'Wolverine', 'Deadpool'],
     emoji: ['Avatar', 'Shrek', 'Aladdin', 'Batman', 'WhatsApp', 'Instagram', 'Adidas', 'Pepsi', 'Harry Potter', 'Frozen'],
+    cricket: ['Ravindra Jadeja', 'Hardik Pandya', 'Glenn Maxwell', 'David Warner', 'Steve Smith', 'KL Rahul', 'Suryakumar Yadav', 'Rishabh Pant', 'Sourav Ganguly', 'Anil Kumble'],
     anything: ['Amazon', 'Netflix', 'Statue of Liberty', 'Great Wall of China', 'Instagram', 'Tesla', 'PlayStation', 'McDonald’s', 'NASA', 'Mount Fuji'],
   };
   for (const d of decoys[world] ?? []) names.add(d);

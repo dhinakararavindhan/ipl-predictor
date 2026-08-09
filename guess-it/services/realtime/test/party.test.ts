@@ -282,3 +282,26 @@ describe('party mode — mystery rounds', () => {
     expect(over.scores).toContainEqual({ name: 'Host', points: 2 });
   });
 });
+
+describe('party mode — emoji reactions', () => {
+  it('a reaction is relayed to every phone in the room', () => {
+    const { mgr, host, others } = setupParty(2);
+    mgr.react(others[0].id, '🔥');
+    for (const p of [host, ...others]) {
+      const r = last(p, 'party_reaction')!;
+      expect(r.by).toBe('G1');
+      expect(r.emoji).toBe('🔥');
+    }
+  });
+
+  it('non-catalog emoji and spam inside the cooldown are dropped', () => {
+    const { mgr, host, others } = setupParty(1);
+    mgr.react(others[0].id, '💣', 1000); // not in PARTY_REACTIONS
+    expect(last(host, 'party_reaction')).toBeUndefined();
+    mgr.react(others[0].id, '😂', 1000);
+    mgr.react(others[0].id, '🔥', 1500); // 500ms later — throttled
+    expect(host.inbox.filter((m) => m.type === 'party_reaction')).toHaveLength(1);
+    mgr.react(others[0].id, '🔥', 2100); // cooldown over
+    expect(host.inbox.filter((m) => m.type === 'party_reaction')).toHaveLength(2);
+  });
+});

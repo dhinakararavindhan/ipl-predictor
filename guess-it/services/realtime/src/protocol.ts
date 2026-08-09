@@ -27,6 +27,7 @@ export type ClientMsg =
   | { type: 'party_start' }
   | { type: 'party_setcode'; code: string }
   | { type: 'party_guess'; digits: string }
+  | { type: 'party_react'; emoji: string }
   | { type: 'party_rematch' };
 
 // ---- server → client ----
@@ -102,4 +103,5 @@ export type ServerMsg =
       isHost: boolean;
     }
   | { type: 'party_left'; name: string }
+  | { type: 'party_reaction'; by: string; emoji: string }
   | { type: 'error'; code: string; message: string };

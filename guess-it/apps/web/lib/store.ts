@@ -87,6 +87,8 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { key: 'lightning', name: 'Lightning', emoji: '⚡', blurb: 'Win in under 30 seconds' },
   { key: 'streak_master', name: 'Streak Master', emoji: '🔥', blurb: 'Reach a 7-day streak' },
   { key: 'duelist', name: 'Duelist', emoji: '⚔️', blurb: 'Win a live race' },
+  { key: 'party_animal', name: 'Party Animal', emoji: '🎪', blurb: 'Win a Party Mode round' },
+  { key: 'mastermind', name: 'Mastermind', emoji: '🕵️', blurb: 'Crack a Mystery party round' },
   { key: 'globetrotter', name: 'Globetrotter', emoji: '🌍', blurb: 'Win in 5 different worlds' },
   { key: 'daily_devotee', name: 'Daily Devotee', emoji: '🎯', blurb: 'Complete 7 Daily Mysteries' },
   { key: 'gauntlet', name: 'Gauntlet Runner', emoji: '🏁', blurb: 'Finish a Weekly Gauntlet' },
@@ -107,11 +109,13 @@ interface ProfileState {
   dailyResults: Record<string, { score: number; outcome: string }>;
   weeklyResults: Record<string, { scores: (number | null)[] }>;
   races: { played: number; won: number };
+  partyWins: number;
   playedDefIds: string[];
   newlyUnlocked: string[]; // shown on next result screen, then cleared
 
   setUsername: (name: string) => void;
   setAvatar: (a: string) => void;
+  recordPartyWin: (mode: 'code' | 'mystery') => void;
   recordResult: (
     entry: HistoryEntry,
     opts: { clueWin: boolean; numberWin: boolean; perfect: boolean; raceWin?: boolean },
@@ -145,11 +149,31 @@ export const useProfile = create<ProfileState>()(
       dailyResults: {},
       weeklyResults: {},
       races: { played: 0, won: 0 },
+      partyWins: 0,
       playedDefIds: [],
       newlyUnlocked: [],
 
       setUsername: (username) => set({ username: username.trim().slice(0, 20) || 'Player' }),
       setAvatar: (avatar) => set({ avatar }),
+
+      recordPartyWin: (mode) => {
+        const p = get();
+        const unlocked = new Set(p.achievements);
+        const fresh: string[] = [];
+        if (!unlocked.has('party_animal')) {
+          unlocked.add('party_animal');
+          fresh.push('party_animal');
+        }
+        if (mode === 'mystery' && !unlocked.has('mastermind')) {
+          unlocked.add('mastermind');
+          fresh.push('mastermind');
+        }
+        set({
+          partyWins: (p.partyWins ?? 0) + 1,
+          achievements: [...unlocked],
+          newlyUnlocked: fresh.length ? fresh : p.newlyUnlocked,
+        });
+      },
 
       recordResult: (entry, opts) => {
         const p = get();
@@ -250,6 +274,7 @@ export const useProfile = create<ProfileState>()(
           dailyResults: {},
           weeklyResults: {},
           races: { played: 0, won: 0 },
+          partyWins: 0,
           playedDefIds: [],
           newlyUnlocked: [],
         }),

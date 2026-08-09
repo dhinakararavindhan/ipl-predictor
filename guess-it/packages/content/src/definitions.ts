@@ -9,6 +9,7 @@ import type { GameDefinition } from '@guess-it/engine';
 import { clue, hl, mc } from './builders';
 import { WAVE2 } from './definitions-wave2';
 import { EMOJI_RIDDLES } from './definitions-emoji';
+import { CRICKET } from './definitions-cricket';
 
 // ---------------- ACTORS — Clue Guess ----------------
 
@@ -334,4 +335,5 @@ export const DEFINITIONS: GameDefinition[] = [
   ...chaosClues,
   ...WAVE2,
   ...EMOJI_RIDDLES,
+  ...CRICKET,
 ];

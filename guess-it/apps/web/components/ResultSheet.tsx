@@ -73,7 +73,7 @@ export function ResultSheet({
   const confettiColors = ['#6C5CE7', '#00D2A8', '#FFB020', '#FF5C7A', '#4DA3FF'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center lg:items-center" style={{ background: 'rgba(0,0,0,0.6)' }}>
       {celebrate &&
         Array.from({ length: 28 }).map((_, i) => (
           <span
@@ -87,7 +87,7 @@ export function ResultSheet({
             }}
           />
         ))}
-      <div className="slide-up card w-full max-w-[520px] rounded-b-none p-6 pb-10" style={{ background: 'var(--surface)' }}>
+      <div className="slide-up card w-full max-w-[520px] rounded-b-none p-6 pb-10 lg:rounded-b-[20px] lg:pb-6" style={{ background: 'var(--surface)' }}>
         {duel ? (
           <>
             <p className="text-center text-4xl">{duelWinner ? '🏆' : '🤝'}</p>
